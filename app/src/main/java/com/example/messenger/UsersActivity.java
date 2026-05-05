@@ -107,9 +107,9 @@ public class UsersActivity extends AppCompatActivity {
             applyFilter(editTextSearch.getText());
         });
         findViewById(R.id.navGroups).setOnClickListener(v -> startActivity(new Intent(this, GroupChatsActivity.class)));
-        findViewById(R.id.navFavorites).setOnClickListener(v -> startActivity(new Intent(this, FavoriteMessagesActivity.class)));
         findViewById(R.id.navActivity).setOnClickListener(v -> startActivity(new Intent(this, ActivityFeedActivity.class)));
         findViewById(R.id.navProfile).setOnClickListener(v -> startActivity(ProfileActivity.newIntent(this)));
+        findViewById(R.id.navSettings).setOnClickListener(v -> startActivity(SettingsActivity.newIntent(this)));
     }
 
     private void observeViewModel() {
@@ -210,7 +210,7 @@ public class UsersActivity extends AppCompatActivity {
             textViewEmptyHint.setText("Когда вам напишут новые сообщения, они появятся в этом разделе.");
         } else if (query != null && !query.trim().isEmpty()) {
             textViewEmpty.setText("Ничего не найдено");
-            textViewEmptyHint.setText("Попробуйте изменить запрос или проверить имя пользователя в Firebase.");
+            textViewEmptyHint.setText("Попробуйте изменить запрос или проверьте, зарегистрирован ли пользователь.");
         } else {
             textViewEmpty.setText("Пока нет собеседников");
             textViewEmptyHint.setText("Для проверки мессенджера создайте второй аккаунт. Текущий пользователь в списке не отображается.");
