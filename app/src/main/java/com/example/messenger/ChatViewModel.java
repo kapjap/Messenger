@@ -19,10 +19,12 @@ public class ChatViewModel extends ViewModel {
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>();
     private final MutableLiveData<User> otherUser = new MutableLiveData<>();
     private final MutableLiveData<Boolean> messageSent = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> otherUserTyping = new MutableLiveData<>(false);
     private final MutableLiveData<String> error = new MutableLiveData<>();
 
     private final DatabaseReference referenceUsers;
     private final DatabaseReference referenceMessages;
+    private final DatabaseReference referenceTyping;
 
     private final String currentUserId;
     private final String otherUserId;
@@ -34,6 +36,7 @@ public class ChatViewModel extends ViewModel {
 
         referenceUsers = FirebaseDatabase.getInstance().getReference("Users");
         referenceMessages = FirebaseDatabase.getInstance().getReference("Messages");
+        referenceTyping = FirebaseDatabase.getInstance().getReference("Typing");
 
         if (currentUserId == null || currentUserId.trim().isEmpty()
                 || otherUserId == null || otherUserId.trim().isEmpty()) {
@@ -45,6 +48,7 @@ public class ChatViewModel extends ViewModel {
 
         loadOtherUser();
         loadMessages();
+        observeOtherUserTyping();
     }
 
     private String createChatId(String uid1, String uid2) {
@@ -97,6 +101,29 @@ public class ChatViewModel extends ViewModel {
         });
     }
 
+    private void observeOtherUserTyping() {
+        if (!canUseTypingNode()) {
+            otherUserTyping.setValue(false);
+            return;
+        }
+
+        referenceTyping
+                .child(chatId)
+                .child(otherUserId)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        Boolean isTyping = snapshot.getValue(Boolean.class);
+                        otherUserTyping.setValue(Boolean.TRUE.equals(isTyping));
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        error.setValue(databaseError.getMessage());
+                    }
+                });
+    }
+
     public void sendMessage(Message message) {
         if (message == null) {
             error.setValue("Сообщение пустое");
@@ -131,6 +158,23 @@ public class ChatViewModel extends ViewModel {
                 .addOnFailureListener(e -> error.setValue(e.getMessage()));
     }
 
+    public void setTyping(boolean isTyping) {
+        if (!canUseTypingNode()) {
+            return;
+        }
+
+        referenceTyping
+                .child(chatId)
+                .child(currentUserId)
+                .setValue(isTyping);
+    }
+
+    private boolean canUseTypingNode() {
+        return chatId != null && !chatId.trim().isEmpty()
+                && currentUserId != null && !currentUserId.trim().isEmpty()
+                && otherUserId != null && !otherUserId.trim().isEmpty();
+    }
+
     public LiveData<List<Message>> getMessages() {
         return messages;
     }
@@ -141,6 +185,10 @@ public class ChatViewModel extends ViewModel {
 
     public LiveData<Boolean> getMessageSent() {
         return messageSent;
+    }
+
+    public LiveData<Boolean> getOtherUserTyping() {
+        return otherUserTyping;
     }
 
     public LiveData<String> getError() {

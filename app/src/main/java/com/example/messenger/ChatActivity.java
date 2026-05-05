@@ -5,6 +5,8 @@ import static java.lang.Math.max;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -18,8 +20,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
-
-import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -38,6 +38,7 @@ public class ChatActivity extends AppCompatActivity {
     private String otherUserId;
 
     private ChatViewModel viewModel;
+    private TextWatcher messageWatcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +72,7 @@ public class ChatActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this, viewModelFactory).get(ChatViewModel.class);
 
         observeViewModel();
+        initTypingListener();
 
         imageViewSendMessage.setOnClickListener(v -> {
             String text = editTextMessage.getText().toString().trim();
@@ -88,6 +90,7 @@ public class ChatActivity extends AppCompatActivity {
                     false
             );
             viewModel.sendMessage(message);
+            viewModel.setTyping(false);
         });
     }
 
@@ -104,6 +107,28 @@ public class ChatActivity extends AppCompatActivity {
         intent.putExtra(EXTRA_CURRENT_USER_ID, currentUserId);
         intent.putExtra(EXTRA_OTHER_USER_ID, otherUserId);
         return intent;
+    }
+
+    private void initTypingListener() {
+        messageWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (viewModel == null) {
+                    return;
+                }
+                viewModel.setTyping(s != null && s.toString().trim().length() > 0);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        };
+
+        editTextMessage.addTextChangedListener(messageWatcher);
     }
 
     private void observeViewModel() {
@@ -129,7 +154,6 @@ public class ChatActivity extends AppCompatActivity {
         viewModel.getOtherUser().observe(this, user -> {
             if (user == null) {
                 textViewTitle.setText("Пользователь");
-                textViewStatus.setText("offline");
                 return;
             }
 
@@ -138,8 +162,22 @@ public class ChatActivity extends AppCompatActivity {
             String userInfo = (name + " " + lastName).trim();
 
             textViewTitle.setText(userInfo.isEmpty() ? "Пользователь" : userInfo);
-            textViewStatus.setText(user.isOnline() ? "online" : "offline");
+            updateStatusText(user.isOnline(), viewModel.getOtherUserTyping().getValue());
         });
+
+        viewModel.getOtherUserTyping().observe(this, isTyping -> {
+            User user = viewModel.getOtherUser().getValue();
+            boolean isOnline = user != null && user.isOnline();
+            updateStatusText(isOnline, isTyping);
+        });
+    }
+
+    private void updateStatusText(boolean isOnline, Boolean isTyping) {
+        if (Boolean.TRUE.equals(isTyping)) {
+            textViewStatus.setText("печатает...");
+        } else {
+            textViewStatus.setText(isOnline ? "online" : "offline");
+        }
     }
 
     @Override
@@ -147,6 +185,8 @@ public class ChatActivity extends AppCompatActivity {
         super.onResume();
         if (viewModel != null) {
             viewModel.setUserOnline(true);
+            String text = editTextMessage != null ? editTextMessage.getText().toString().trim() : "";
+            viewModel.setTyping(!text.isEmpty());
         }
     }
 
@@ -154,7 +194,16 @@ public class ChatActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (viewModel != null) {
+            viewModel.setTyping(false);
             viewModel.setUserOnline(false);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (editTextMessage != null && messageWatcher != null) {
+            editTextMessage.removeTextChangedListener(messageWatcher);
+        }
+        super.onDestroy();
     }
 }
