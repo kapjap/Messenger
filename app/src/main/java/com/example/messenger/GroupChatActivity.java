@@ -69,7 +69,7 @@ public class GroupChatActivity extends AppCompatActivity {
         recyclerViewMessages.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(GroupChatViewModel.class);
-        viewModel.init(groupId);
+        viewModel.init(groupId, currentUserId);
         observeViewModel();
 
         findViewById(R.id.buttonBack).setOnClickListener(v -> onBackPressed());
