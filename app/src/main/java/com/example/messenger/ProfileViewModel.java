@@ -31,6 +31,7 @@ public class ProfileViewModel extends ViewModel {
             if (currentUser == null) {
                 profileUserLiveData.setValue(null);
             } else {
+                setUserOnline(true);
                 loadCurrentUser(currentUser.getUid());
             }
         });
@@ -38,6 +39,7 @@ public class ProfileViewModel extends ViewModel {
         FirebaseUser currentUser = auth.getCurrentUser();
         firebaseUserLiveData.setValue(currentUser);
         if (currentUser != null) {
+            setUserOnline(true);
             loadCurrentUser(currentUser.getUid());
         }
     }
@@ -49,6 +51,7 @@ public class ProfileViewModel extends ViewModel {
                 User user = snapshot.getValue(User.class);
                 if (user != null) {
                     user.setId(snapshot.getKey());
+                    user.setOnline(true);
                 }
                 profileUserLiveData.setValue(user);
             }
@@ -57,6 +60,15 @@ public class ProfileViewModel extends ViewModel {
             public void onCancelled(@NonNull DatabaseError error) {
             }
         });
+    }
+
+    private void setUserOnline(boolean isOnline) {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null) return;
+        usersReference.child(currentUser.getUid()).child("online").setValue(isOnline);
+        if (!isOnline) {
+            usersReference.child(currentUser.getUid()).child("lastSeen").setValue(System.currentTimeMillis());
+        }
     }
 
     public LiveData<FirebaseUser> getFirebaseUser() {
