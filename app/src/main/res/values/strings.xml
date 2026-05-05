@@ -1,9 +1,20 @@
 <resources>
-    <string name="app_name">Messenger</string>
-    <string name="password">Password</string>
-    <string name="forgot_password">Forgot password?</string>
-    <string name="register">Register</string>
-    <string name="logout">Logout</string>
-    <string name="the_reset_link_has_been_successfully_sent">The reset link has been successfully sent</string>
-    <string name="type_your_message">Type your message:</string>
+    <string name="app_name">Messenger+</string>
+    <string name="password">Пароль</string>
+    <string name="forgot_password">Забыли пароль?</string>
+    <string name="register">Регистрация</string>
+    <string name="logout">Выйти</string>
+    <string name="the_reset_link_has_been_successfully_sent">Ссылка для сброса пароля успешно отправлена</string>
+    <string name="type_your_message">Введите сообщение</string>
+    <string name="login">Войти</string>
+    <string name="email">Электронная почта</string>
+    <string name="name">Имя</string>
+    <string name="last_name">Фамилия</string>
+    <string name="age">Возраст</string>
+    <string name="create_account">Создать аккаунт</string>
+    <string name="create_profile">Создание профиля</string>
+    <string name="your_email">Ваша почта</string>
+    <string name="reset_password">Сбросить пароль</string>
+    <string name="chats">Чаты</string>
+    <string name="messenger_plus">Messenger+</string>
 </resources>
