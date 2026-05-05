@@ -7,6 +7,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -28,6 +31,7 @@ public class UsersActivity extends AppCompatActivity {
     private UsersAdapter usersAdapter;
     private UsersVIewModel vIewModel;
     private TextInputEditText editTextSearch;
+    private TextView textViewEmpty;
 
     private final List<UsersVIewModel.ChatPreview> allChats = new ArrayList<>();
 
@@ -66,6 +70,10 @@ public class UsersActivity extends AppCompatActivity {
         editTextSearch = findViewById(R.id.editTextSearch);
         usersAdapter = new UsersAdapter();
         recyclingView.setAdapter(usersAdapter);
+        textViewEmpty = findViewById(R.id.textViewEmpty);
+
+        ImageButton buttonBack = findViewById(R.id.buttonBack);
+        buttonBack.setOnClickListener(v -> onBackPressed());
     }
 
     private void observeViewModel() {
@@ -90,6 +98,7 @@ public class UsersActivity extends AppCompatActivity {
         String q = query == null ? "" : query.toString().toLowerCase(Locale.getDefault()).trim();
         if (q.isEmpty()) {
             usersAdapter.setChats(new ArrayList<>(allChats));
+            updateEmptyState(allChats.isEmpty());
             return;
         }
 
@@ -102,6 +111,11 @@ public class UsersActivity extends AppCompatActivity {
             }
         }
         usersAdapter.setChats(filtered);
+        updateEmptyState(filtered.isEmpty());
+    }
+
+    private void updateEmptyState(boolean isEmpty) {
+        textViewEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
     }
 
     public static Intent newIntent(Context context, String currentUserId) {

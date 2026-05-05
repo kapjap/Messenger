@@ -51,9 +51,11 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
         holder.textViewLastMessageTime.setText(formatTime(preview.getLastMessageTime()));
 
-        int bkResId = user.isOnline() ? R.drawable.circle_green : R.drawable.circle_red;
+        boolean isOnline = user.isOnline();
+        int bkResId = isOnline ? R.drawable.circle_green : R.drawable.circle_red;
         Drawable background = ContextCompat.getDrawable(holder.itemView.getContext(), bkResId);
         holder.onlineStatus.setBackground(background);
+        holder.textViewStatus.setText(isOnline ? "Online" : "Offline");
 
         int unreadCount = preview.getUnreadCount();
         if (unreadCount > 0) {
@@ -85,6 +87,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
         TextView textViewUserName;
+        TextView textViewStatus;
         TextView textViewLastMessage;
         TextView textViewLastMessageTime;
         TextView textViewUnreadCount;
@@ -93,6 +96,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
             textViewUserName = itemView.findViewById(R.id.textViewUserName);
+            textViewStatus = itemView.findViewById(R.id.textViewStatus);
             textViewLastMessage = itemView.findViewById(R.id.textViewLastMessage);
             textViewLastMessageTime = itemView.findViewById(R.id.textViewLastMessageTime);
             textViewUnreadCount = itemView.findViewById(R.id.textViewUnreadCount);
