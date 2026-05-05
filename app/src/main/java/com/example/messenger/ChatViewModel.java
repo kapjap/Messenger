@@ -16,16 +16,16 @@ import java.util.List;
 
 public class ChatViewModel extends ViewModel {
 
-    private MutableLiveData<List<Message>> messages = new MutableLiveData<>();
-    private MutableLiveData<User> otherUser = new MutableLiveData<>();
-    private MutableLiveData<Boolean> messageSent = new MutableLiveData<>();
-    private MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<List<Message>> messages = new MutableLiveData<>();
+    private final MutableLiveData<User> otherUser = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> messageSent = new MutableLiveData<>();
+    private final MutableLiveData<String> error = new MutableLiveData<>();
 
-    private DatabaseReference referenceUsers;
-    private DatabaseReference referenceMessages;
+    private final DatabaseReference referenceUsers;
+    private final DatabaseReference referenceMessages;
 
-    private String currentUserId;
-    private String otherUserId;
+    private final String currentUserId;
+    private final String otherUserId;
     private String chatId;
 
     public ChatViewModel(String currentUserId, String otherUserId) {
@@ -48,11 +48,7 @@ public class ChatViewModel extends ViewModel {
     }
 
     private String createChatId(String uid1, String uid2) {
-        if (uid1.compareTo(uid2) < 0) {
-            return uid1 + "_" + uid2;
-        } else {
-            return uid2 + "_" + uid1;
-        }
+        return uid1.compareTo(uid2) < 0 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
     }
 
     private void loadOtherUser() {
@@ -83,8 +79,10 @@ public class ChatViewModel extends ViewModel {
 
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Message message = dataSnapshot.getValue(Message.class);
-
                     if (message != null) {
+                        if (message.getId() == null || message.getId().trim().isEmpty()) {
+                            message.setId(dataSnapshot.getKey());
+                        }
                         messageList.add(message);
                     }
                 }
@@ -120,9 +118,14 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        referenceMessages
-                .child(chatId)
-                .push()
+        DatabaseReference newMessageRef = referenceMessages.child(chatId).push();
+        message.setId(newMessageRef.getKey());
+
+        if (message.getTimestamp() <= 0) {
+            message.setTimestamp(System.currentTimeMillis());
+        }
+
+        newMessageRef
                 .setValue(message)
                 .addOnSuccessListener(unused -> messageSent.setValue(true))
                 .addOnFailureListener(e -> error.setValue(e.getMessage()));
@@ -149,9 +152,6 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        referenceUsers
-                .child(currentUserId)
-                .child("online")
-                .setValue(isOnline);
+        referenceUsers.child(currentUserId).child("online").setValue(isOnline);
     }
 }
