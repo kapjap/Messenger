@@ -156,7 +156,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Зарегистрируйте второй аккаунт или найдите пользователя через поиск. В списке не показывается ваш текущий профиль."
+            android:text="Для проверки мессенджера создайте второй аккаунт. Текущий пользователь в списке не отображается."
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
     </LinearLayout>
@@ -196,16 +196,6 @@
             android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/navFavorites"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Избранное"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
-
-        <TextView
             android:id="@+id/navActivity"
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -222,6 +212,16 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="Профиль"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/navSettings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Настройки"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
     </LinearLayout>
