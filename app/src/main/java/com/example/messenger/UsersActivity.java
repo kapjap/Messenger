@@ -232,8 +232,5 @@ public class UsersActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (viewModel != null) {
-            viewModel.setUserOnline(false);
-        }
     }
 }
