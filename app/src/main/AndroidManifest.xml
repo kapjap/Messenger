@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Messenger">
         <activity
+            android:name=".ProfileActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+        <activity
             android:name=".ChatActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />

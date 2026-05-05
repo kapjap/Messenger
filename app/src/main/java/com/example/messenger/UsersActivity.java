@@ -124,8 +124,13 @@ public class UsersActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.item_profile) {
+            startActivity(ProfileActivity.newIntent(this));
+            return true;
+        }
         if (item.getItemId() == R.id.item_logout) {
             vIewModel.logout();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
