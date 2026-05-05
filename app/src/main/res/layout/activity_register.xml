@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_bg"
+    android:background="#F1EEFF"
     tools:context=".RegisterActivity">
 
     <TextView
         android:id="@+id/titleRegister"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="62dp"
-        android:text="@string/create_profile"
-        android:textColor="@color/primary"
+        android:layout_marginTop="48dp"
+        android:text="Создание аккаунта"
+        android:textColor="#6F42C1"
         android:textSize="30sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -26,10 +25,11 @@
         android:id="@+id/cardRegister"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="24dp"
-        app:cardBackgroundColor="@color/card_bg"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/titleRegister">
@@ -45,7 +45,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:background="@drawable/bg_input"
-                android:hint="@string/name"
+                android:hint="Имя"
+                android:paddingHorizontal="14dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
 
@@ -55,7 +56,8 @@
                 android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_input"
-                android:hint="@string/last_name"
+                android:hint="Фамилия"
+                android:paddingHorizontal="14dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
 
@@ -65,8 +67,9 @@
                 android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_input"
-                android:hint="@string/email"
+                android:hint="Электронная почта"
                 android:inputType="textEmailAddress"
+                android:paddingHorizontal="14dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
 
@@ -76,8 +79,9 @@
                 android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_input"
-                android:hint="@string/password"
+                android:hint="Пароль"
                 android:inputType="textPassword"
+                android:paddingHorizontal="14dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
 
@@ -87,8 +91,9 @@
                 android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_input"
-                android:hint="@string/age"
+                android:hint="Возраст"
                 android:inputType="number"
+                android:paddingHorizontal="14dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_secondary" />
 
@@ -98,8 +103,19 @@
                 android:layout_height="54dp"
                 android:layout_marginTop="20dp"
                 android:background="@drawable/bg_button_primary"
-                android:text="@string/create_account"
+                android:text="Зарегистрироваться"
                 android:textColor="@color/white"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/textViewLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="Уже есть аккаунт? Войти"
+                android:textColor="#6F42C1"
+                android:textSize="14sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
