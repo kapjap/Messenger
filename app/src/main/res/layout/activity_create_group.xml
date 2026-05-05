@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/screen_bg"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -11,12 +12,22 @@
         android:layout_height="40dp"
         android:background="@android:color/transparent"
         android:contentDescription="Назад"
-        android:src="@android:drawable/ic_media_previous" />
+        android:src="@android:drawable/ic_media_previous"
+        android:tint="@color/primary" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Создание группы"
+        android:textColor="@color/primary"
+        android:textSize="32sp"
+        android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="20dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editTextGroupName"
@@ -37,11 +48,20 @@
             android:hint="Описание группы" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <TextView
+        android:id="@+id/textViewSelectedCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Выбрано участников: 0"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
+
     <Button
         android:id="@+id/buttonSelectMembers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:text="Выбрать участников" />
 
     <Button
