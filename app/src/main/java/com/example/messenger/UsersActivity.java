@@ -5,14 +5,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -29,11 +29,14 @@ import java.util.List;
 import java.util.Locale;
 
 public class UsersActivity extends AppCompatActivity {
-    private RecyclerView recyclingView;
+
+    private RecyclerView recyclerViewUsers;
     private UsersAdapter usersAdapter;
-    private UsersVIewModel vIewModel;
+    private UsersVIewModel viewModel;
     private TextInputEditText editTextSearch;
     private TextView textViewEmpty;
+    private TextView textViewEmptyHint;
+    private LinearLayout emptyStateLayout;
     private MaterialButtonToggleGroup toggleGroupFilters;
     private boolean unreadOnly = false;
 
@@ -43,14 +46,40 @@ public class UsersActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_users);
+
         initViews();
 
-        vIewModel = new ViewModelProvider(this).get(UsersVIewModel.class);
+        viewModel = new ViewModelProvider(this).get(UsersVIewModel.class);
         observeViewModel();
+        setupListeners();
 
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+    }
+
+    private void initViews() {
+        recyclerViewUsers = findViewById(R.id.recyclerViewUsers);
+        editTextSearch = findViewById(R.id.editTextSearch);
+        textViewEmpty = findViewById(R.id.textViewEmpty);
+        textViewEmptyHint = findViewById(R.id.textViewEmptyHint);
+        emptyStateLayout = findViewById(R.id.emptyStateLayout);
+        toggleGroupFilters = findViewById(R.id.toggleGroupFilters);
+
+        usersAdapter = new UsersAdapter();
+        recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
+        recyclerViewUsers.setAdapter(usersAdapter);
+    }
+
+    private void setupListeners() {
         usersAdapter.setOnUserClickListener(user -> {
-            String currentUserId = vIewModel.getCurrentUserId();
-            if (currentUserId == null || user == null || user.getId() == null) return;
+            String currentUserId = viewModel.getCurrentUserId();
+            if (currentUserId == null || user == null || user.getId() == null) {
+                Toast.makeText(this, "Не удалось открыть чат", Toast.LENGTH_SHORT).show();
+                return;
+            }
             Intent intent = ChatActivity.newIntent(UsersActivity.this, currentUserId, user.getId());
             startActivity(intent);
         });
@@ -63,49 +92,28 @@ public class UsersActivity extends AppCompatActivity {
             @Override public void afterTextChanged(Editable s) { }
         });
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-    }
-
-    private void showPinPopup(UsersVIewModel.ChatPreview preview) {
-        PopupMenu popupMenu = new PopupMenu(this, recyclingView);
-        String title = preview.isPinned() ? "Открепить чат" : "Закрепить чат";
-        popupMenu.getMenu().add(0, 1, 0, title);
-        popupMenu.setOnMenuItemClickListener(item -> {
-            User user = preview.getUser();
-            if (item.getItemId() == 1 && user != null && user.getId() != null) {
-                vIewModel.togglePinned(user.getId());
-                return true;
-            }
-            return false;
-        });
-        popupMenu.show();
-    }
-
-    private void initViews() {
-        recyclingView = findViewById(R.id.recyclerViewUsers);
-        editTextSearch = findViewById(R.id.editTextSearch);
-        usersAdapter = new UsersAdapter();
-        recyclingView.setLayoutManager(new LinearLayoutManager(this));
-        recyclingView.setAdapter(usersAdapter);
-        textViewEmpty = findViewById(R.id.textViewEmpty);
-        toggleGroupFilters = findViewById(R.id.toggleGroupFilters);
-
         toggleGroupFilters.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
             unreadOnly = checkedId == R.id.buttonUnread;
             applyFilter(editTextSearch.getText());
         });
 
-        ImageButton buttonBack = findViewById(R.id.buttonBack);
-        buttonBack.setOnClickListener(v -> onBackPressed());
+        ImageButton buttonMenu = findViewById(R.id.buttonMenu);
+        buttonMenu.setOnClickListener(v -> showMainMenu(buttonMenu));
+
+        findViewById(R.id.navChats).setOnClickListener(v -> {
+            unreadOnly = false;
+            toggleGroupFilters.check(R.id.buttonAllChats);
+            applyFilter(editTextSearch.getText());
+        });
+        findViewById(R.id.navGroups).setOnClickListener(v -> startActivity(new Intent(this, GroupChatsActivity.class)));
+        findViewById(R.id.navFavorites).setOnClickListener(v -> startActivity(new Intent(this, FavoriteMessagesActivity.class)));
+        findViewById(R.id.navActivity).setOnClickListener(v -> startActivity(new Intent(this, ActivityFeedActivity.class)));
+        findViewById(R.id.navProfile).setOnClickListener(v -> startActivity(ProfileActivity.newIntent(this)));
     }
 
     private void observeViewModel() {
-        vIewModel.getUser().observe(this, firebaseUser -> {
+        viewModel.getUser().observe(this, firebaseUser -> {
             if (firebaseUser == null) {
                 Intent intent = LoginActivity.newIntent(UsersActivity.this);
                 startActivity(intent);
@@ -113,7 +121,7 @@ public class UsersActivity extends AppCompatActivity {
             }
         });
 
-        vIewModel.getChatPreviews().observe(this, previews -> {
+        viewModel.getChatPreviews().observe(this, previews -> {
             allChats.clear();
             if (previews != null) {
                 allChats.addAll(previews);
@@ -122,38 +130,17 @@ public class UsersActivity extends AppCompatActivity {
         });
     }
 
-    private void applyFilter(CharSequence query) {
-        String q = query == null ? "" : query.toString().toLowerCase(Locale.getDefault()).trim();
-
-        List<UsersVIewModel.ChatPreview> filtered = new ArrayList<>();
-        for (UsersVIewModel.ChatPreview chat : allChats) {
-            if (unreadOnly && chat.getUnreadCount() <= 0) {
-                continue;
-            }
-            User user = chat.getUser();
-            String name = (user.getName() + " " + user.getLastName()).toLowerCase(Locale.getDefault());
-            if (q.isEmpty() || name.contains(q)) {
-                filtered.add(chat);
-            }
-        }
-        usersAdapter.setChats(filtered);
-        updateEmptyState(filtered.isEmpty());
+    private void showMainMenu(View anchor) {
+        PopupMenu popupMenu = new PopupMenu(this, anchor);
+        popupMenu.getMenu().add(0, R.id.item_profile, 0, "Профиль");
+        popupMenu.getMenu().add(0, R.id.item_pinned_chats, 1, "Закреплённые");
+        popupMenu.getMenu().add(0, R.id.item_settings, 2, "Настройки");
+        popupMenu.getMenu().add(0, R.id.item_logout, 3, "Выйти");
+        popupMenu.setOnMenuItemClickListener(this::handleMenuItem);
+        popupMenu.show();
     }
 
-    private void updateEmptyState(boolean isEmpty) {
-        textViewEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-        if (!isEmpty) return;
-        textViewEmpty.setText(unreadOnly
-                ? "Нет непрочитанных сообщений"
-                : "Пользователи не найдены");
-    }
-
-    public static Intent newIntent(Context context, String currentUserId) {
-        return new Intent(context, UsersActivity.class);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    private boolean handleMenuItem(MenuItem item) {
         if (item.getItemId() == R.id.item_profile) {
             startActivity(ProfileActivity.newIntent(this));
             return true;
@@ -167,27 +154,86 @@ public class UsersActivity extends AppCompatActivity {
             return true;
         }
         if (item.getItemId() == R.id.item_logout) {
-            vIewModel.logout();
+            viewModel.logout();
             return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return super.onCreateOptionsMenu(menu);
+    private void showPinPopup(UsersVIewModel.ChatPreview preview) {
+        PopupMenu popupMenu = new PopupMenu(this, recyclerViewUsers);
+        String title = preview.isPinned() ? "Открепить чат" : "Закрепить чат";
+        popupMenu.getMenu().add(0, 1, 0, title);
+        popupMenu.setOnMenuItemClickListener(item -> {
+            User user = preview.getUser();
+            if (item.getItemId() == 1 && user != null && user.getId() != null) {
+                viewModel.togglePinned(user.getId());
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    private void applyFilter(CharSequence query) {
+        String q = query == null ? "" : query.toString().toLowerCase(Locale.getDefault()).trim();
+
+        List<UsersVIewModel.ChatPreview> filtered = new ArrayList<>();
+        for (UsersVIewModel.ChatPreview chat : allChats) {
+            if (unreadOnly && chat.getUnreadCount() <= 0) {
+                continue;
+            }
+            User user = chat.getUser();
+            if (user == null) continue;
+
+            String firstName = user.getName() == null ? "" : user.getName();
+            String lastName = user.getLastName() == null ? "" : user.getLastName();
+            String fullName = (firstName + " " + lastName).toLowerCase(Locale.getDefault()).trim();
+            String lastMessage = chat.getLastMessage() == null ? "" : chat.getLastMessage().toLowerCase(Locale.getDefault());
+
+            if (q.isEmpty() || fullName.contains(q) || lastMessage.contains(q)) {
+                filtered.add(chat);
+            }
+        }
+
+        usersAdapter.setChats(filtered);
+        updateEmptyState(filtered.isEmpty(), q);
+    }
+
+    private void updateEmptyState(boolean isEmpty, String query) {
+        emptyStateLayout.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        recyclerViewUsers.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        if (!isEmpty) return;
+
+        if (unreadOnly) {
+            textViewEmpty.setText("Нет непрочитанных сообщений");
+            textViewEmptyHint.setText("Когда вам напишут новые сообщения, они появятся в этом разделе.");
+        } else if (query != null && !query.trim().isEmpty()) {
+            textViewEmpty.setText("Ничего не найдено");
+            textViewEmptyHint.setText("Попробуйте изменить запрос или проверить имя пользователя в Firebase.");
+        } else {
+            textViewEmpty.setText("Пока нет собеседников");
+            textViewEmptyHint.setText("Для проверки мессенджера создайте второй аккаунт. Текущий пользователь в списке не отображается.");
+        }
+    }
+
+    public static Intent newIntent(Context context, String currentUserId) {
+        return new Intent(context, UsersActivity.class);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        vIewModel.setUserOnline(true);
+        if (viewModel != null) {
+            viewModel.setUserOnline(true);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        vIewModel.setUserOnline(false);
+        if (viewModel != null) {
+            viewModel.setUserOnline(false);
+        }
     }
 }
