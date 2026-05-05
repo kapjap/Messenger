@@ -1,6 +1,7 @@
 package com.example.messenger;
 
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,16 +11,21 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHolder> {
 
-    private List<User> users = new ArrayList<>();
+    private static final String EMPTY_MESSAGE_HINT = "Начните общение";
+
+    private List<UsersVIewModel.ChatPreview> chats = new ArrayList<>();
     private OnUserClickListener onUserClickListener;
 
-    public void setUsers(List<User> users) {
-        this.users = users;
+    public void setChats(List<UsersVIewModel.ChatPreview> chats) {
+        this.chats = chats;
         notifyDataSetChanged();
     }
 
@@ -29,27 +35,44 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
     @Override
     public int getItemCount() {
-        return users.size();
+        return chats.size();
     }
 
     @Override
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
+        UsersVIewModel.ChatPreview preview = chats.get(position);
+        User user = preview.getUser();
 
-        User user = users.get(position);
+        String fullName = (user.getName() + " " + user.getLastName()).trim();
+        holder.textViewUserName.setText(fullName.isEmpty() ? "Пользователь" : fullName);
 
-        String userInfo = user.getName() + " " + user.getLastName() + ", " + user.getAge();
-        holder.textViewUserInfo.setText(userInfo);
+        String message = preview.getLastMessage();
+        holder.textViewLastMessage.setText(TextUtils.isEmpty(message) ? EMPTY_MESSAGE_HINT : message);
+
+        holder.textViewLastMessageTime.setText(formatTime(preview.getLastMessageTime()));
 
         int bkResId = user.isOnline() ? R.drawable.circle_green : R.drawable.circle_red;
-
         Drawable background = ContextCompat.getDrawable(holder.itemView.getContext(), bkResId);
         holder.onlineStatus.setBackground(background);
+
+        int unreadCount = preview.getUnreadCount();
+        if (unreadCount > 0) {
+            holder.textViewUnreadCount.setVisibility(View.VISIBLE);
+            holder.textViewUnreadCount.setText(String.valueOf(unreadCount));
+        } else {
+            holder.textViewUnreadCount.setVisibility(View.GONE);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (onUserClickListener != null) {
                 onUserClickListener.onUserClick(user);
             }
         });
+    }
+
+    private String formatTime(long timestamp) {
+        if (timestamp <= 0) return "";
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date(timestamp));
     }
 
     @NonNull
@@ -61,12 +84,18 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     }
 
     static class UserViewHolder extends RecyclerView.ViewHolder {
-        TextView textViewUserInfo;
+        TextView textViewUserName;
+        TextView textViewLastMessage;
+        TextView textViewLastMessageTime;
+        TextView textViewUnreadCount;
         View onlineStatus;
 
         public UserViewHolder(@NonNull View itemView) {
             super(itemView);
-            textViewUserInfo = itemView.findViewById(R.id.textViewUserInfo);
+            textViewUserName = itemView.findViewById(R.id.textViewUserName);
+            textViewLastMessage = itemView.findViewById(R.id.textViewLastMessage);
+            textViewLastMessageTime = itemView.findViewById(R.id.textViewLastMessageTime);
+            textViewUnreadCount = itemView.findViewById(R.id.textViewUnreadCount);
             onlineStatus = itemView.findViewById(R.id.onlineStatus);
         }
     }
