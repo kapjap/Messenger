@@ -44,9 +44,8 @@ public class UsersVIewModel extends ViewModel {
                     User u = dataSnapshot.getValue(User.class);
                     if (u == null) continue;
 
-                    // 🔥 ВАЖНО — ЗАДАЁМ ID ВРУЧНУЮ
                     String uid = dataSnapshot.getKey();
-                    u = new User(uid, u.getName(), u.getLastName(), u.getAge(), u.isOnline());
+                    u.setId(uid);
 
                     if (!currentUser.getUid().equals(uid)) {
                         usersFromDb.add(u);
@@ -82,5 +81,11 @@ public class UsersVIewModel extends ViewModel {
         usersReference.child(firebaseUser.getUid())
                 .child("online")
                 .setValue(isOnline);
+
+        if (!isOnline) {
+            usersReference.child(firebaseUser.getUid())
+                    .child("lastSeen")
+                    .setValue(System.currentTimeMillis());
+        }
     }
 }
