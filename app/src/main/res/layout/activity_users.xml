@@ -58,6 +58,31 @@
             android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleGroupFilters"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        app:singleSelection="true"
+        app:layout_constraintStart_toStartOf="@id/searchInputLayout"
+        app:layout_constraintTop_toBottomOf="@id/searchInputLayout"
+        app:checkedButton="@id/buttonAllChats">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonAllChats"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Все" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonUnread"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Непрочитанные" />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
     <TextView
         android:id="@+id/textViewEmpty"
         android:layout_width="wrap_content"
@@ -69,7 +94,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchInputLayout" />
+        app:layout_constraintTop_toBottomOf="@id/toggleGroupFilters" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewUsers"
@@ -84,7 +109,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchInputLayout"
+        app:layout_constraintTop_toBottomOf="@id/toggleGroupFilters"
         tools:listitem="@layout/user_item" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

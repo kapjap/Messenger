@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
@@ -32,6 +33,8 @@ public class UsersActivity extends AppCompatActivity {
     private UsersVIewModel vIewModel;
     private TextInputEditText editTextSearch;
     private TextView textViewEmpty;
+    private MaterialButtonToggleGroup toggleGroupFilters;
+    private boolean unreadOnly = false;
 
     private final List<UsersVIewModel.ChatPreview> allChats = new ArrayList<>();
 
@@ -87,6 +90,13 @@ public class UsersActivity extends AppCompatActivity {
         usersAdapter = new UsersAdapter();
         recyclingView.setAdapter(usersAdapter);
         textViewEmpty = findViewById(R.id.textViewEmpty);
+        toggleGroupFilters = findViewById(R.id.toggleGroupFilters);
+
+        toggleGroupFilters.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            unreadOnly = checkedId == R.id.buttonUnread;
+            applyFilter(editTextSearch.getText());
+        });
 
         ImageButton buttonBack = findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener(v -> onBackPressed());
@@ -112,17 +122,15 @@ public class UsersActivity extends AppCompatActivity {
 
     private void applyFilter(CharSequence query) {
         String q = query == null ? "" : query.toString().toLowerCase(Locale.getDefault()).trim();
-        if (q.isEmpty()) {
-            usersAdapter.setChats(new ArrayList<>(allChats));
-            updateEmptyState(allChats.isEmpty());
-            return;
-        }
 
         List<UsersVIewModel.ChatPreview> filtered = new ArrayList<>();
         for (UsersVIewModel.ChatPreview chat : allChats) {
+            if (unreadOnly && chat.getUnreadCount() <= 0) {
+                continue;
+            }
             User user = chat.getUser();
             String name = (user.getName() + " " + user.getLastName()).toLowerCase(Locale.getDefault());
-            if (name.contains(q)) {
+            if (q.isEmpty() || name.contains(q)) {
                 filtered.add(chat);
             }
         }
@@ -132,6 +140,10 @@ public class UsersActivity extends AppCompatActivity {
 
     private void updateEmptyState(boolean isEmpty) {
         textViewEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        if (!isEmpty) return;
+        textViewEmpty.setText(unreadOnly
+                ? "Нет непрочитанных сообщений"
+                : "Пользователи не найдены");
     }
 
     public static Intent newIntent(Context context, String currentUserId) {
