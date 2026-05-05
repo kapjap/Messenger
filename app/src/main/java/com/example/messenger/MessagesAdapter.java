@@ -16,6 +16,10 @@ import java.util.Locale;
 
 public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.MessageViewHolder> {
 
+    public interface OnMessageLongClickListener {
+        void onMessageLongClick(Message message);
+    }
+
     private static final int VIEW_TYPE_MY = 1;
     private static final int VIEW_TYPE_OTHER = 2;
 
@@ -23,8 +27,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     private final String currentUserId;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
+    private OnMessageLongClickListener longClickListener;
+
     public MessagesAdapter(String currentUserId) {
         this.currentUserId = currentUserId;
+    }
+
+    public void setOnMessageLongClickListener(OnMessageLongClickListener longClickListener) {
+        this.longClickListener = longClickListener;
     }
 
     public void setMessages(List<Message> newMessages) {
@@ -53,6 +63,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
         long ts = message.getTimestamp();
         holder.textViewTime.setText(ts > 0 ? timeFormat.format(new Date(ts)) : "--:--");
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onMessageLongClick(message);
+                return true;
+            }
+            return false;
+        });
     }
 
     @NonNull

@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -20,6 +21,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -39,6 +46,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private ChatViewModel viewModel;
     private TextWatcher messageWatcher;
+    private DatabaseReference favoritesRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,8 @@ public class ChatActivity extends AppCompatActivity {
 
         initViews();
 
+        favoritesRef = FirebaseDatabase.getInstance().getReference("Favorites");
+
         currentUserId = getIntent().getStringExtra(EXTRA_CURRENT_USER_ID);
         otherUserId = getIntent().getStringExtra(EXTRA_OTHER_USER_ID);
 
@@ -66,6 +76,7 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         messagesAdapter = new MessagesAdapter(currentUserId);
+        messagesAdapter.setOnMessageLongClickListener(this::showMessageActions);
         recyclerViewMessages.setAdapter(messagesAdapter);
 
         ChatViewModelFactory viewModelFactory = new ChatViewModelFactory(currentUserId, otherUserId);
@@ -94,6 +105,53 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+
+    private void showMessageActions(Message message) {
+        if (message == null || message.getId() == null || message.getId().trim().isEmpty()) {
+            return;
+        }
+
+        PopupMenu popupMenu = new PopupMenu(this, recyclerViewMessages);
+        String actionTitle = message.isFavorite() ? "Убрать из избранного" : "Добавить в избранное";
+        popupMenu.getMenu().add(actionTitle);
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (message.isFavorite()) {
+                removeFromFavorites(message);
+            } else {
+                addToFavorites(message);
+            }
+            return true;
+        });
+        popupMenu.show();
+    }
+
+    private void addToFavorites(Message message) {
+        Map<String, Object> favoriteData = new HashMap<>();
+        favoriteData.put("messageId", message.getId());
+        favoriteData.put("text", message.getText());
+        favoriteData.put("timestamp", message.getTimestamp());
+        favoriteData.put("companionId", otherUserId);
+        favoriteData.put("companionName", textViewTitle.getText() != null ? textViewTitle.getText().toString() : "");
+        favoriteData.put("favorite", true);
+
+        favoritesRef.child(currentUserId).child(message.getId()).setValue(favoriteData)
+                .addOnSuccessListener(unused -> {
+                    message.setFavorite(true);
+                    messagesAdapter.notifyDataSetChanged();
+                    Toast.makeText(this, "Добавлено в избранное", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+    private void removeFromFavorites(Message message) {
+        favoritesRef.child(currentUserId).child(message.getId()).removeValue()
+                .addOnSuccessListener(unused -> {
+                    message.setFavorite(false);
+                    messagesAdapter.notifyDataSetChanged();
+                    Toast.makeText(this, "Удалено из избранного", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
     private void initViews() {
         textViewTitle = findViewById(R.id.textViewTitle);
         textViewStatus = findViewById(R.id.textViewStatus);
