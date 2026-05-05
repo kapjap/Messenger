@@ -24,78 +24,121 @@ public class GroupChatsViewModel extends ViewModel {
 
     private final MutableLiveData<List<GroupChatItem>> groupChats = new MutableLiveData<>(new ArrayList<>());
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    private final DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("Users");
     private final DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference("Groups");
     private final DatabaseReference groupMessagesRef = FirebaseDatabase.getInstance().getReference("GroupMessages");
 
+    private final Map<String, Group> userGroups = new HashMap<>();
+    private final Map<String, GroupMessage> lastMessages = new HashMap<>();
+    private final Map<String, Integer> unreadCounts = new HashMap<>();
+    private String currentUserName = "";
+    private boolean loaded = false;
+
     public LiveData<List<GroupChatItem>> getGroupChats() { return groupChats; }
     public String getCurrentUserId() { return currentUser != null ? currentUser.getUid() : null; }
-    public String getCurrentUserName() {
-        if (currentUser == null) return "";
-        String name = currentUser.getDisplayName();
-        return name != null ? name : "";
-    }
+    public String getCurrentUserName() { return currentUserName == null ? "" : currentUserName; }
 
     public void loadGroups() {
         String uid = getCurrentUserId();
-        if (uid == null) { groupChats.setValue(new ArrayList<>()); return; }
+        if (uid == null || uid.trim().isEmpty()) {
+            groupChats.setValue(new ArrayList<>());
+            return;
+        }
 
-        groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        loadCurrentUserName(uid);
+
+        if (loaded) return;
+        loaded = true;
+
+        groupsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<Group> userGroups = new ArrayList<>();
+                userGroups.clear();
                 for (DataSnapshot groupSnapshot : snapshot.getChildren()) {
                     Group group = groupSnapshot.getValue(Group.class);
                     if (group == null) continue;
                     if (group.getId() == null || group.getId().trim().isEmpty()) group.setId(groupSnapshot.getKey());
-                    if (group.hasMember(uid)) userGroups.add(group);
+                    if (group.hasMember(uid)) {
+                        userGroups.put(group.getId(), group);
+                    }
                 }
-                loadPreviews(uid, userGroups);
+                publish();
+                attachGroupMessagesListeners(uid);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { groupChats.setValue(new ArrayList<>()); }
+            public void onCancelled(@NonNull DatabaseError error) {
+                groupChats.setValue(new ArrayList<>());
+            }
         });
     }
 
-    private void loadPreviews(String uid, List<Group> groups) {
-        if (groups.isEmpty()) { groupChats.setValue(new ArrayList<>()); return; }
+    private void loadCurrentUserName(String uid) {
+        usersRef.child(uid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                User user = snapshot.getValue(User.class);
+                if (user != null) {
+                    String fullName = (user.getName() + " " + user.getLastName()).trim();
+                    if (!fullName.isEmpty()) {
+                        currentUserName = fullName;
+                    } else if (!user.getEmail().isEmpty()) {
+                        currentUserName = user.getEmail();
+                    } else {
+                        currentUserName = uid;
+                    }
+                } else {
+                    currentUserName = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : uid;
+                }
+            }
 
-        Map<String, GroupChatItem> map = new HashMap<>();
-        final int[] loaded = {0};
-        for (Group group : groups) {
-            map.put(group.getId(), new GroupChatItem(group));
-            groupMessagesRef.child(group.getId()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                currentUserName = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : uid;
+            }
+        });
+    }
+
+    private void attachGroupMessagesListeners(String uid) {
+        for (String groupId : userGroups.keySet()) {
+            groupMessagesRef.child(groupId).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     GroupMessage lastMessage = null;
                     int unreadCount = 0;
+
                     for (DataSnapshot messageSnapshot : snapshot.getChildren()) {
                         GroupMessage message = messageSnapshot.getValue(GroupMessage.class);
                         if (message == null) continue;
+                        if (message.getId() == null || message.getId().trim().isEmpty()) message.setId(messageSnapshot.getKey());
                         if (lastMessage == null || message.getTimestamp() > lastMessage.getTimestamp()) lastMessage = message;
                         if (!message.isReadBy(uid) && (message.getSenderId() == null || !uid.equals(message.getSenderId()))) unreadCount++;
                     }
-                    GroupChatItem item = map.get(group.getId());
-                    if (item != null) {
-                        item.setLastMessage(lastMessage != null ? lastMessage.getText() : "");
-                        item.setLastMessageTime(lastMessage != null ? lastMessage.getTimestamp() : group.getCreatedAt());
-                        item.setUnreadCount(unreadCount);
-                    }
-                    loaded[0]++;
-                    if (loaded[0] == groups.size()) publish(map);
+
+                    lastMessages.put(groupId, lastMessage);
+                    unreadCounts.put(groupId, unreadCount);
+                    publish();
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
-                    loaded[0]++;
-                    if (loaded[0] == groups.size()) publish(map);
+                    publish();
                 }
             });
         }
     }
 
-    private void publish(Map<String, GroupChatItem> map) {
-        List<GroupChatItem> items = new ArrayList<>(map.values());
+    private void publish() {
+        List<GroupChatItem> items = new ArrayList<>();
+        for (Group group : userGroups.values()) {
+            GroupChatItem item = new GroupChatItem(group);
+            GroupMessage last = lastMessages.get(group.getId());
+            item.setLastMessage(last != null ? last.getText() : "Начните общение");
+            item.setLastMessageTime(last != null ? last.getTimestamp() : group.getCreatedAt());
+            Integer unread = unreadCounts.get(group.getId());
+            item.setUnreadCount(unread == null ? 0 : unread);
+            items.add(item);
+        }
         Collections.sort(items, Comparator.comparingLong(GroupChatItem::getLastMessageTime).reversed());
         groupChats.setValue(items);
     }
