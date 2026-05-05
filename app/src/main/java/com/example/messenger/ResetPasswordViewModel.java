@@ -9,23 +9,31 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class ResetPasswordViewModel  extends ViewModel {
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
-    private MutableLiveData<String> error = new MutableLiveData<>();
-    private MutableLiveData<Boolean> success = new MutableLiveData<>();
-    public  void resetPassword(String email)
-    {
-        auth.sendPasswordResetEmail(email).addOnSuccessListener(new OnSuccessListener<Void>() {
-            @Override
-            public void onSuccess(Void unused) {
-                success.setValue(true);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                error.setValue(e.getMessage());
-            }
-        });
+public class ResetPasswordViewModel extends ViewModel {
+
+    private final FirebaseAuth auth = FirebaseAuth.getInstance();
+    private final MutableLiveData<String> error = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> success = new MutableLiveData<>();
+
+    public void resetPassword(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            error.setValue("Введите электронную почту");
+            return;
+        }
+
+        auth.sendPasswordResetEmail(email.trim())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        success.setValue(true);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        error.setValue("Не удалось отправить письмо. " + e.getMessage());
+                    }
+                });
     }
 
     public LiveData<Boolean> isSuccess() {
@@ -35,6 +43,4 @@ public class ResetPasswordViewModel  extends ViewModel {
     public LiveData<String> getError() {
         return error;
     }
-
-
 }
