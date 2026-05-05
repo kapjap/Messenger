@@ -148,6 +148,10 @@ public class UsersActivity extends AppCompatActivity {
             startActivity(PinnedChatsActivity.newIntent(this));
             return true;
         }
+        if (item.getItemId() == R.id.item_settings) {
+            startActivity(SettingsActivity.newIntent(this));
+            return true;
+        }
         if (item.getItemId() == R.id.item_logout) {
             vIewModel.logout();
             return true;
