@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
@@ -29,7 +30,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="15sp"
                 android:textStyle="bold"
-                android:tools:text="Иван Петров" />
+                tools:text="Иван Петров" />
 
             <TextView
                 android:id="@+id/textViewMessage"
@@ -38,7 +39,7 @@
                 android:layout_marginTop="4dp"
                 android:textColor="@color/text_primary"
                 android:textSize="14sp"
-                android:tools:text="Сообщение для избранного" />
+                tools:text="Сообщение для избранного" />
 
             <TextView
                 android:id="@+id/textViewTime"
@@ -47,7 +48,7 @@
                 android:layout_marginTop="6dp"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
-                android:tools:text="01.05.2026 13:20" />
+                tools:text="01.05.2026 13:20" />
         </LinearLayout>
 
         <ImageView
