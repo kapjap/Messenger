@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -84,7 +83,7 @@ public class ProfileActivity extends AppCompatActivity {
         Button buttonLogout = findViewById(R.id.buttonLogout);
 
         buttonEditProfile.setOnClickListener(v ->
-                Toast.makeText(this, "Редактирование профиля будет добавлено позже", Toast.LENGTH_SHORT).show());
+                startActivity(EditProfileActivity.newIntent(ProfileActivity.this)));
 
         buttonLogout.setOnClickListener(v -> viewModel.logout());
     }
