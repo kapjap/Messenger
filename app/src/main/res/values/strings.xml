@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Messenger</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="register">Register</string>
+    <string name="logout">Logout</string>
+    <string name="the_reset_link_has_been_successfully_sent">The reset link has been successfully sent</string>
+    <string name="type_your_message">Type your message:</string>
+</resources>
