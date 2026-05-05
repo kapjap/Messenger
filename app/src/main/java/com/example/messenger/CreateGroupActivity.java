@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -19,6 +20,7 @@ public class CreateGroupActivity extends AppCompatActivity {
 
     private TextInputEditText editTextGroupName;
     private TextInputEditText editTextGroupDescription;
+    private TextView textViewSelectedCount;
     private ArrayList<String> selectedMembers = new ArrayList<>();
     private CreateGroupViewModel viewModel;
 
@@ -28,6 +30,7 @@ public class CreateGroupActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     selectedMembers = result.getData().getStringArrayListExtra(SelectGroupMembersActivity.EXTRA_SELECTED_MEMBER_IDS);
                     if (selectedMembers == null) selectedMembers = new ArrayList<>();
+                    updateSelectedCount();
                     Toast.makeText(this, "Выбрано участников: " + selectedMembers.size(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -43,6 +46,7 @@ public class CreateGroupActivity extends AppCompatActivity {
         Button buttonSelectMembers = findViewById(R.id.buttonSelectMembers);
         Button buttonCreateGroup = findViewById(R.id.buttonCreateGroupConfirm);
         ImageButton buttonBack = findViewById(R.id.buttonBackCreateGroup);
+        textViewSelectedCount = findViewById(R.id.textViewSelectedCount);
 
         buttonBack.setOnClickListener(v -> onBackPressed());
 
@@ -60,6 +64,13 @@ public class CreateGroupActivity extends AppCompatActivity {
         });
 
         buttonCreateGroup.setOnClickListener(v -> createGroup());
+        updateSelectedCount();
+    }
+
+    private void updateSelectedCount() {
+        if (textViewSelectedCount != null) {
+            textViewSelectedCount.setText("Выбрано участников: " + selectedMembers.size());
+        }
     }
 
     private void createGroup() {
@@ -75,11 +86,12 @@ public class CreateGroupActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String groupId) {
                 String currentUserId = viewModel.getCurrentUserId();
+                String currentUserName = viewModel.getCurrentUserName();
                 if (currentUserId == null) {
                     finish();
                     return;
                 }
-                Intent intent = ChatActivity.newIntent(CreateGroupActivity.this, currentUserId, groupId);
+                Intent intent = GroupChatActivity.newIntent(CreateGroupActivity.this, groupId, currentUserId, currentUserName);
                 startActivity(intent);
                 finish();
             }
