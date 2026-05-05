@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -20,6 +21,7 @@ public class CreateGroupViewModel extends ViewModel {
     private final MutableLiveData<String> error = new MutableLiveData<>();
 
     private final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    private final DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("Users");
     private final DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference("Groups");
 
     public LiveData<Boolean> getGroupCreated() {
@@ -32,6 +34,12 @@ public class CreateGroupViewModel extends ViewModel {
 
     public String getCurrentUserId() {
         return currentUser != null ? currentUser.getUid() : null;
+    }
+
+    public String getCurrentUserName() {
+        if (currentUser == null) return "";
+        String uid = currentUser.getUid();
+        return currentUser.getEmail() != null ? currentUser.getEmail() : uid;
     }
 
     public void createGroup(@NonNull String title,
