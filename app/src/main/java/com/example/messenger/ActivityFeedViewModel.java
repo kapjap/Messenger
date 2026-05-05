@@ -127,8 +127,14 @@ public class ActivityFeedViewModel extends ViewModel {
             }
         }
 
+        final int finalTotalSent = totalSent;
+        final int finalUnread = unread;
+        final int finalActiveChatsCount = activeChats.size();
+        final int finalGroupChatsCount = userGroupIds.size();
+        final Map<String, Integer> finalContactActivity = new HashMap<>(contactActivity);
+
         if (userGroupIds.isEmpty()) {
-            publishResult(uid, totalSent, activeChats.size(), unread, 0, latestTs, latestAction, weekly, contactActivity);
+            publishResult(uid, finalTotalSent, finalActiveChatsCount, finalUnread, 0, latestTs, latestAction, weekly, finalContactActivity);
             return;
         }
 
@@ -163,16 +169,16 @@ public class ActivityFeedViewModel extends ViewModel {
                     }
 
                     loaded[0]++;
-                    if (loaded[0] == userGroupIds.size()) {
-                        publishResult(uid, totalSent, activeChats.size(), unread + unreadGroups[0], userGroupIds.size(), latestTsHolder[0], latestActionHolder[0], weekly, contactActivity);
+                    if (loaded[0] == finalGroupChatsCount) {
+                        publishResult(uid, finalTotalSent, finalActiveChatsCount, finalUnread + unreadGroups[0], finalGroupChatsCount, latestTsHolder[0], latestActionHolder[0], weekly, finalContactActivity);
                     }
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     loaded[0]++;
-                    if (loaded[0] == userGroupIds.size()) {
-                        publishResult(uid, totalSent, activeChats.size(), unread + unreadGroups[0], userGroupIds.size(), latestTsHolder[0], latestActionHolder[0], weekly, contactActivity);
+                    if (loaded[0] == finalGroupChatsCount) {
+                        publishResult(uid, finalTotalSent, finalActiveChatsCount, finalUnread + unreadGroups[0], finalGroupChatsCount, latestTsHolder[0], latestActionHolder[0], weekly, finalContactActivity);
                     }
                 }
             });
