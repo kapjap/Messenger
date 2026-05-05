@@ -20,6 +20,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DatabaseReference;
@@ -76,6 +77,7 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         messagesAdapter = new MessagesAdapter(currentUserId);
+        recyclerViewMessages.setLayoutManager(new LinearLayoutManager(this));
         messagesAdapter.setOnMessageLongClickListener(this::showMessageActions);
         recyclerViewMessages.setAdapter(messagesAdapter);
 

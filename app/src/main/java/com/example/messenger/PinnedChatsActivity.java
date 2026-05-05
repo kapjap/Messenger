@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
@@ -40,6 +41,7 @@ public class PinnedChatsActivity extends AppCompatActivity {
         buttonBack.setOnClickListener(v -> onBackPressed());
 
         usersAdapter = new UsersAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(usersAdapter);
 
         viewModel = new ViewModelProvider(this).get(UsersVIewModel.class);

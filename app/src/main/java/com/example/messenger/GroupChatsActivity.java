@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -33,12 +34,13 @@ public class GroupChatsActivity extends AppCompatActivity {
         buttonCreateGroup.setOnClickListener(v -> startActivity(new Intent(this, CreateGroupActivity.class)));
 
         groupsAdapter = new GroupsAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(groupsAdapter);
 
         groupsAdapter.setOnGroupClickListener(group -> {
             String currentUserId = viewModel.getCurrentUserId();
             if (currentUserId == null || group == null || group.getId() == null) return;
-            Intent intent = ChatActivity.newIntent(this, currentUserId, group.getId());
+            Intent intent = GroupChatActivity.newIntent(this, group.getId(), currentUserId, viewModel.getCurrentUserName());
             startActivity(intent);
         });
 

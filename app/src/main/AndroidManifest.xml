@@ -19,6 +19,9 @@
             android:name=".CreateGroupActivity"
             android:exported="false" />
         <activity
+            android:name=".GroupInfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".AboutActivity"
             android:exported="false" />
         <activity

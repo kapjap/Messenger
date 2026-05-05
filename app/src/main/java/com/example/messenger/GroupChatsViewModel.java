@@ -29,6 +29,11 @@ public class GroupChatsViewModel extends ViewModel {
 
     public LiveData<List<GroupChatItem>> getGroupChats() { return groupChats; }
     public String getCurrentUserId() { return currentUser != null ? currentUser.getUid() : null; }
+    public String getCurrentUserName() {
+        if (currentUser == null) return "";
+        String name = currentUser.getDisplayName();
+        return name != null ? name : "";
+    }
 
     public void loadGroups() {
         String uid = getCurrentUserId();
