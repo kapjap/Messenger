@@ -2,6 +2,8 @@ package com.example.messenger;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.RadioButton;
@@ -19,9 +21,11 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private static final String PREFS_NAME = "app_settings";
+    private static final String KEY_TEXT_SIZE = "text_size";
+
     private SettingsViewModel viewModel;
     private boolean bindingSettings = false;
-    private boolean pendingThemeChange = false;
 
     private SwitchCompat switchNotifications;
     private SwitchCompat switchMessageSound;
@@ -31,6 +35,20 @@ public class SettingsActivity extends AppCompatActivity {
     private RadioButton radioSmall;
     private RadioButton radioMedium;
     private RadioButton radioLarge;
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        SharedPreferences prefs = newBase.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String size = prefs.getString(KEY_TEXT_SIZE, SettingsViewModel.TEXT_MEDIUM);
+        float scale = 1.0f;
+        if (SettingsViewModel.TEXT_SMALL.equals(size)) scale = 0.88f;
+        if (SettingsViewModel.TEXT_LARGE.equals(size)) scale = 1.15f;
+
+        Configuration configuration = new Configuration(newBase.getResources().getConfiguration());
+        configuration.fontScale = scale;
+        Context context = newBase.createConfigurationContext(configuration);
+        super.attachBaseContext(context);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +126,6 @@ public class SettingsActivity extends AppCompatActivity {
         switchDarkTheme.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (bindingSettings) return;
             viewModel.setDarkThemeEnabled(isChecked);
-            pendingThemeChange = true;
             Toast.makeText(this, "Тема выбрана. Нажмите \"Сохранить настройки\"", Toast.LENGTH_SHORT).show();
         });
 
@@ -121,6 +138,7 @@ public class SettingsActivity extends AppCompatActivity {
             } else {
                 viewModel.setTextSize(SettingsViewModel.TEXT_MEDIUM);
             }
+            Toast.makeText(this, "Размер текста применится после сохранения", Toast.LENGTH_SHORT).show();
         });
 
         MaterialButton buttonSaveSettings = findViewById(R.id.buttonSaveSettings);
@@ -130,8 +148,8 @@ public class SettingsActivity extends AppCompatActivity {
             AppCompatDelegate.setDefaultNightMode(dark
                     ? AppCompatDelegate.MODE_NIGHT_YES
                     : AppCompatDelegate.MODE_NIGHT_NO);
-            pendingThemeChange = false;
             Toast.makeText(this, "Настройки сохранены", Toast.LENGTH_SHORT).show();
+            recreate();
         });
 
         MaterialButton buttonClearCache = findViewById(R.id.buttonClearCache);
@@ -140,6 +158,7 @@ public class SettingsActivity extends AppCompatActivity {
             ThemePreferences.setDarkThemeEnabled(this, false);
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             Toast.makeText(this, "Настройки сброшены", Toast.LENGTH_SHORT).show();
+            recreate();
         });
 
         MaterialButton buttonAbout = findViewById(R.id.buttonAbout);
