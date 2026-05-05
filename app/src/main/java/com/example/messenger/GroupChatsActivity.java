@@ -30,7 +30,7 @@ public class GroupChatsActivity extends AppCompatActivity {
         FloatingActionButton buttonCreateGroup = findViewById(R.id.buttonCreateGroup);
 
         buttonBack.setOnClickListener(v -> onBackPressed());
-        buttonCreateGroup.setOnClickListener(v -> Toast.makeText(this, "Создание группы — TODO", Toast.LENGTH_SHORT).show());
+        buttonCreateGroup.setOnClickListener(v -> startActivity(new Intent(this, CreateGroupActivity.class)));
 
         groupsAdapter = new GroupsAdapter();
         recyclerView.setAdapter(groupsAdapter);
