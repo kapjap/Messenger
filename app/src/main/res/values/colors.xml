@@ -3,9 +3,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="primary">#5A3BFF</color>
-    <color name="primary_dark">#4A2EE0</color>
-    <color name="primary_light">#7E65FF</color>
+    <color name="primary">#7C4DFF</color>
+    <color name="primary_dark">#5E35D6</color>
+    <color name="primary_light">#B39DFF</color>
 
     <color name="screen_bg">#F5F2FF</color>
     <color name="card_bg">#FFFFFFFF</color>
