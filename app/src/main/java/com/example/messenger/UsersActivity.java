@@ -18,6 +18,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
@@ -88,6 +89,7 @@ public class UsersActivity extends AppCompatActivity {
         recyclingView = findViewById(R.id.recyclerViewUsers);
         editTextSearch = findViewById(R.id.editTextSearch);
         usersAdapter = new UsersAdapter();
+        recyclingView.setLayoutManager(new LinearLayoutManager(this));
         recyclingView.setAdapter(usersAdapter);
         textViewEmpty = findViewById(R.id.textViewEmpty);
         toggleGroupFilters = findViewById(R.id.toggleGroupFilters);

@@ -17,6 +17,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.text.SimpleDateFormat;
@@ -49,6 +50,7 @@ public class FavoriteMessagesActivity extends AppCompatActivity {
         textViewEmpty = findViewById(R.id.textViewEmpty);
 
         adapter = new FavoriteAdapter(item -> viewModel.removeFromFavorites(item.getMessageId()));
+        recyclerViewFavorites.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewFavorites.setAdapter(adapter);
 
         viewModel = new ViewModelProvider(this).get(FavoritesViewModel.class);

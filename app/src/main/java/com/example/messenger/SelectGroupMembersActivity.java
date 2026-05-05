@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,6 +43,7 @@ public class SelectGroupMembersActivity extends AppCompatActivity {
         Button buttonCreate = findViewById(R.id.buttonCreateGroupFromMembers);
 
         adapter = new SelectMembersAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
 
         buttonBack.setOnClickListener(v -> onBackPressed());

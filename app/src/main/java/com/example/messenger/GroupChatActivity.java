@@ -75,8 +75,8 @@ public class GroupChatActivity extends AppCompatActivity {
         findViewById(R.id.buttonBack).setOnClickListener(v -> onBackPressed());
 
         findViewById(R.id.buttonGroupInfo).setOnClickListener(v -> {
-            Intent intent = new Intent("com.example.messenger.ACTION_GROUP_INFO");
-            intent.putExtra("group_id", groupId);
+            Intent intent = new Intent(this, GroupInfoActivity.class);
+            intent.putExtra(GroupInfoActivity.EXTRA_GROUP_ID, groupId);
             startActivity(intent);
         });
 
