@@ -52,6 +52,7 @@ public class UsersVIewModel extends ViewModel {
 
     private final MutableLiveData<FirebaseUser> user = new MutableLiveData<>();
     private final MutableLiveData<List<ChatPreview>> chatPreviews = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<String> error = new MutableLiveData<>();
 
     private final Set<String> pinnedChatIds = new HashSet<>();
 
@@ -69,11 +70,16 @@ public class UsersVIewModel extends ViewModel {
                 pinnedChatIds.clear();
                 return;
             }
+            setUserOnline(true);
+            loadChats();
             observePinnedChats(current.getUid());
         });
 
         FirebaseUser current = auth.getCurrentUser();
+        user.setValue(current);
         if (current != null) {
+            setUserOnline(true);
+            loadChats();
             observePinnedChats(current.getUid());
         }
     }
@@ -93,7 +99,10 @@ public class UsersVIewModel extends ViewModel {
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+                loadChats();
+            }
         });
     }
 
@@ -111,76 +120,86 @@ public class UsersVIewModel extends ViewModel {
                 for (DataSnapshot dataSnapshot : usersSnapshot.getChildren()) {
                     User u = dataSnapshot.getValue(User.class);
                     if (u == null) continue;
+
                     String uid = dataSnapshot.getKey();
                     if (uid == null || uid.equals(currentUser.getUid())) continue;
+
                     u.setId(uid);
                     usersMap.put(uid, u);
+                }
+
+                if (usersMap.isEmpty()) {
+                    chatPreviews.setValue(new ArrayList<>());
+                    return;
                 }
 
                 messagesReference.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot messagesSnapshot) {
-                        List<ChatPreview> previews = new ArrayList<>();
-
-                        for (Map.Entry<String, User> entry : usersMap.entrySet()) {
-                            String otherUserId = entry.getKey();
-                            User otherUser = entry.getValue();
-                            String chatId = createChatId(currentUser.getUid(), otherUserId);
-
-                            DataSnapshot chatSnapshot = messagesSnapshot.child(chatId);
-                            String lastMessageText = "";
-                            long lastMessageTime = 0L;
-                            int unread = 0;
-
-                            if (chatSnapshot.exists()) {
-                                for (DataSnapshot messageSnapshot : chatSnapshot.getChildren()) {
-                                    String text = messageSnapshot.child("text").getValue(String.class);
-                                    if (text != null) {
-                                        lastMessageText = text;
-                                    }
-
-                                    Long timestamp = messageSnapshot.child("timestamp").getValue(Long.class);
-                                    if (timestamp == null) {
-                                        timestamp = messageSnapshot.child("time").getValue(Long.class);
-                                    }
-                                    if (timestamp == null) {
-                                        timestamp = messageSnapshot.child("createdAt").getValue(Long.class);
-                                    }
-                                    if (timestamp != null && timestamp > 0) {
-                                        lastMessageTime = timestamp;
-                                    }
-
-                                    String receiverId = messageSnapshot.child("receiverId").getValue(String.class);
-                                    Boolean isRead = messageSnapshot.child("read").getValue(Boolean.class);
-                                    if (isRead == null) {
-                                        isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
-                                    }
-                                    if (currentUser.getUid().equals(receiverId) && Boolean.FALSE.equals(isRead)) {
-                                        unread++;
-                                    }
-                                }
-                            }
-
-                            previews.add(new ChatPreview(otherUser, lastMessageText, lastMessageTime, unread, pinnedChatIds.contains(chatId)));
-                        }
-
-                        Collections.sort(previews, (a, b) -> {
-                            if (a.isPinned() != b.isPinned()) {
-                                return a.isPinned() ? -1 : 1;
-                            }
-                            return Long.compare(b.getLastMessageTime(), a.getLastMessageTime());
-                        });
-                        chatPreviews.setValue(previews);
+                        publishChatPreviews(currentUser.getUid(), usersMap, messagesSnapshot);
                     }
 
                     @Override
-                    public void onCancelled(@NonNull DatabaseError error) { }
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        error.setValue(databaseError.getMessage());
+                        publishChatPreviews(currentUser.getUid(), usersMap, null);
+                    }
                 });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) { }
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+                chatPreviews.setValue(new ArrayList<>());
+            }
         });
+    }
+
+    private void publishChatPreviews(String currentUserId, Map<String, User> usersMap, DataSnapshot messagesSnapshot) {
+        List<ChatPreview> previews = new ArrayList<>();
+
+        for (Map.Entry<String, User> entry : usersMap.entrySet()) {
+            String otherUserId = entry.getKey();
+            User otherUser = entry.getValue();
+            String chatId = createChatId(currentUserId, otherUserId);
+
+            String lastMessageText = "";
+            long lastMessageTime = 0L;
+            int unread = 0;
+
+            DataSnapshot chatSnapshot = messagesSnapshot == null ? null : messagesSnapshot.child(chatId);
+            if (chatSnapshot != null && chatSnapshot.exists()) {
+                for (DataSnapshot messageSnapshot : chatSnapshot.getChildren()) {
+                    String text = messageSnapshot.child("text").getValue(String.class);
+                    Long timestamp = messageSnapshot.child("timestamp").getValue(Long.class);
+                    if (timestamp == null) timestamp = messageSnapshot.child("time").getValue(Long.class);
+                    if (timestamp == null) timestamp = messageSnapshot.child("createdAt").getValue(Long.class);
+                    if (timestamp == null) timestamp = 0L;
+
+                    if (timestamp >= lastMessageTime) {
+                        lastMessageTime = timestamp;
+                        lastMessageText = text == null ? "" : text;
+                    }
+
+                    String receiverId = messageSnapshot.child("receiverId").getValue(String.class);
+                    Boolean isRead = messageSnapshot.child("read").getValue(Boolean.class);
+                    if (isRead == null) isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
+                    if (currentUserId.equals(receiverId) && Boolean.FALSE.equals(isRead)) {
+                        unread++;
+                    }
+                }
+            }
+
+            previews.add(new ChatPreview(otherUser, lastMessageText, lastMessageTime, unread, pinnedChatIds.contains(chatId)));
+        }
+
+        Collections.sort(previews, (a, b) -> {
+            if (a.isPinned() != b.isPinned()) {
+                return a.isPinned() ? -1 : 1;
+            }
+            return Long.compare(b.getLastMessageTime(), a.getLastMessageTime());
+        });
+        chatPreviews.setValue(previews);
     }
 
     public void togglePinned(String otherUserId) {
@@ -209,12 +228,17 @@ public class UsersVIewModel extends ViewModel {
         return user;
     }
 
+    public LiveData<String> getError() {
+        return error;
+    }
+
     public String getCurrentUserId() {
         FirebaseUser firebaseUser = auth.getCurrentUser();
         return firebaseUser != null ? firebaseUser.getUid() : null;
     }
 
     public void logout() {
+        setUserOnline(false);
         auth.signOut();
     }
 
