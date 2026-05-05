@@ -3,6 +3,7 @@ package com.example.messenger;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,8 +26,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText editTextPassword;
     private Button buttonLogin;
     private TextView textViewForgotPassword;
-    private  TextView textViewRegister;
-    private  LoginVIewModel vIewModel;
+    private TextView textViewRegister;
+    private LoginVIewModel vIewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +35,7 @@ public class LoginActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
         initViews();
-        vIewModel= new ViewModelProvider(this).get(LoginVIewModel.class);
+        vIewModel = new ViewModelProvider(this).get(LoginVIewModel.class);
         observeViewModel();
         setupClickListeners();
 
@@ -44,19 +45,21 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
     }
-    private void initViews(){
-       editTextEmail = findViewById(R.id.editTextEmail);
+
+    private void initViews() {
+        editTextEmail = findViewById(R.id.editTextEmail);
         editTextPassword = findViewById(R.id.editTextPassword);
-       buttonLogin = findViewById(R.id.buttonLogin);
+        buttonLogin = findViewById(R.id.buttonLogin);
         textViewForgotPassword = findViewById(R.id.textViewForgotPassword);
-         textViewRegister = findViewById(R.id.textViewRegister);
+        textViewRegister = findViewById(R.id.textViewRegister);
     }
+
     private void launchNextScreen_Sign_up() {
         Intent intent = new Intent(this, RegisterActivity.class);
         startActivity(intent);
     }
-    private  void observeViewModel()
-    {
+
+    private void observeViewModel() {
         vIewModel.getError().observe(this, new Observer<String>() {
             @Override
             public void onChanged(String errorMessage) {
@@ -68,22 +71,34 @@ public class LoginActivity extends AppCompatActivity {
         vIewModel.getUser().observe(this, new Observer<FirebaseUser>() {
             @Override
             public void onChanged(FirebaseUser firebaseUser) {
-                if(firebaseUser != null){
-                    Intent intent = UsersActivity.newIntent(LoginActivity.this,firebaseUser.getUid());
+                if (firebaseUser != null) {
+                    Intent intent = UsersActivity.newIntent(LoginActivity.this, firebaseUser.getUid());
                     startActivity(intent);
                 }
             }
         });
     }
-    private void setupClickListeners(){
+
+    private void setupClickListeners() {
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String email = editTextEmail.getText().toString().trim();
                 String password = editTextPassword.getText().toString().trim();
-                vIewModel.login(email,password);
+
+                if (TextUtils.isEmpty(email)) {
+                    Toast.makeText(LoginActivity.this, "Введите электронную почту", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (TextUtils.isEmpty(password)) {
+                    Toast.makeText(LoginActivity.this, "Введите пароль", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                vIewModel.login(email, password);
             }
         });
+
         textViewRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -91,17 +106,17 @@ public class LoginActivity extends AppCompatActivity {
                 launchNextScreen_Sign_up();
             }
         });
+
         textViewForgotPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = ResetPasswordActivity.newIntent(LoginActivity.this,editTextEmail.getText().toString().trim());
+                Intent intent = ResetPasswordActivity.newIntent(LoginActivity.this, editTextEmail.getText().toString().trim());
                 startActivity(intent);
             }
         });
     }
 
-    public static Intent newIntent(Context context)
-    {
+    public static Intent newIntent(Context context) {
         return new Intent(context, LoginActivity.class);
     }
 }
