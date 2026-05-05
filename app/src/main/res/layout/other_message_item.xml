@@ -13,6 +13,8 @@
         app:layout_constraintStart_toStartOf="parent"
         android:maxWidth="250dp"
         android:background="@drawable/other_message_bg"
-        tool:text="Long Long Long Long Long Long Long Long Long Long Long Long Long Long Long Long Long Long"
+        tool:text="Привет! Как дела?"
+                android:textColor="@color/text_primary"
+        android:textSize="16sp"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>

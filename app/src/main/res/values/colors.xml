@@ -2,4 +2,12 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="primary">#4A2EFF</color>
+    <color name="primary_dark">#3B22DE</color>
+    <color name="screen_bg">#F4F5FF</color>
+    <color name="card_bg">#FFFFFFFF</color>
+    <color name="input_bg">#F5F6FB</color>
+    <color name="text_primary">#1E1E2F</color>
+    <color name="text_secondary">#8B8FA3</color>
+    <color name="bubble_other">#F1F2F7</color>
 </resources>
