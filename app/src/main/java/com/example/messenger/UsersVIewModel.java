@@ -55,6 +55,12 @@ public class UsersVIewModel extends ViewModel {
     private final MutableLiveData<String> error = new MutableLiveData<>();
 
     private final Set<String> pinnedChatIds = new HashSet<>();
+    private final Map<String, User> cachedUsers = new HashMap<>();
+    private DataSnapshot cachedMessagesSnapshot;
+    private String activeUserId;
+    private boolean usersListenerAttached = false;
+    private boolean messagesListenerAttached = false;
+    private boolean pinnedListenerAttached = false;
 
     public UsersVIewModel() {
         auth = FirebaseAuth.getInstance();
@@ -66,25 +72,75 @@ public class UsersVIewModel extends ViewModel {
             FirebaseUser current = firebaseAuth.getCurrentUser();
             user.setValue(current);
             if (current == null) {
-                chatPreviews.setValue(new ArrayList<>());
+                activeUserId = null;
+                cachedUsers.clear();
                 pinnedChatIds.clear();
+                cachedMessagesSnapshot = null;
+                chatPreviews.setValue(new ArrayList<>());
                 return;
             }
+            activeUserId = current.getUid();
             setUserOnline(true);
-            loadChats();
-            observePinnedChats(current.getUid());
+            attachUsersListener();
+            attachMessagesListener();
+            attachPinnedChatsListener(activeUserId);
         });
 
         FirebaseUser current = auth.getCurrentUser();
         user.setValue(current);
         if (current != null) {
+            activeUserId = current.getUid();
             setUserOnline(true);
-            loadChats();
-            observePinnedChats(current.getUid());
+            attachUsersListener();
+            attachMessagesListener();
+            attachPinnedChatsListener(activeUserId);
         }
     }
 
-    private void observePinnedChats(String uid) {
+    private void attachUsersListener() {
+        if (usersListenerAttached) return;
+        usersListenerAttached = true;
+
+        usersReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot usersSnapshot) {
+                rebuildUsers(usersSnapshot);
+                publishChatPreviews();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+                cachedUsers.clear();
+                publishChatPreviews();
+            }
+        });
+    }
+
+    private void attachMessagesListener() {
+        if (messagesListenerAttached) return;
+        messagesListenerAttached = true;
+
+        messagesReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot messagesSnapshot) {
+                cachedMessagesSnapshot = messagesSnapshot;
+                publishChatPreviews();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+                cachedMessagesSnapshot = null;
+                publishChatPreviews();
+            }
+        });
+    }
+
+    private void attachPinnedChatsListener(String uid) {
+        if (pinnedListenerAttached) return;
+        pinnedListenerAttached = true;
+
         pinnedChatsReference.child(uid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -95,79 +151,52 @@ public class UsersVIewModel extends ViewModel {
                         pinnedChatIds.add(child.getKey());
                     }
                 }
-                loadChats();
+                publishChatPreviews();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 error.setValue(databaseError.getMessage());
-                loadChats();
+                publishChatPreviews();
             }
         });
     }
 
-    private void loadChats() {
-        FirebaseUser currentUser = auth.getCurrentUser();
-        if (currentUser == null) {
+    private void rebuildUsers(DataSnapshot usersSnapshot) {
+        cachedUsers.clear();
+        String currentId = getCurrentUserId();
+        if (currentId == null) return;
+
+        for (DataSnapshot dataSnapshot : usersSnapshot.getChildren()) {
+            User u = dataSnapshot.getValue(User.class);
+            if (u == null) continue;
+
+            String uid = dataSnapshot.getKey();
+            if (uid == null || uid.equals(currentId)) continue;
+
+            u.setId(uid);
+            cachedUsers.put(uid, u);
+        }
+    }
+
+    private void publishChatPreviews() {
+        String currentId = getCurrentUserId();
+        if (currentId == null) {
             chatPreviews.setValue(new ArrayList<>());
             return;
         }
 
-        usersReference.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot usersSnapshot) {
-                Map<String, User> usersMap = new HashMap<>();
-                for (DataSnapshot dataSnapshot : usersSnapshot.getChildren()) {
-                    User u = dataSnapshot.getValue(User.class);
-                    if (u == null) continue;
-
-                    String uid = dataSnapshot.getKey();
-                    if (uid == null || uid.equals(currentUser.getUid())) continue;
-
-                    u.setId(uid);
-                    usersMap.put(uid, u);
-                }
-
-                if (usersMap.isEmpty()) {
-                    chatPreviews.setValue(new ArrayList<>());
-                    return;
-                }
-
-                messagesReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot messagesSnapshot) {
-                        publishChatPreviews(currentUser.getUid(), usersMap, messagesSnapshot);
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        error.setValue(databaseError.getMessage());
-                        publishChatPreviews(currentUser.getUid(), usersMap, null);
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                error.setValue(databaseError.getMessage());
-                chatPreviews.setValue(new ArrayList<>());
-            }
-        });
-    }
-
-    private void publishChatPreviews(String currentUserId, Map<String, User> usersMap, DataSnapshot messagesSnapshot) {
         List<ChatPreview> previews = new ArrayList<>();
-
-        for (Map.Entry<String, User> entry : usersMap.entrySet()) {
+        for (Map.Entry<String, User> entry : cachedUsers.entrySet()) {
             String otherUserId = entry.getKey();
             User otherUser = entry.getValue();
-            String chatId = createChatId(currentUserId, otherUserId);
+            String chatId = createChatId(currentId, otherUserId);
 
             String lastMessageText = "";
             long lastMessageTime = 0L;
             int unread = 0;
 
-            DataSnapshot chatSnapshot = messagesSnapshot == null ? null : messagesSnapshot.child(chatId);
+            DataSnapshot chatSnapshot = cachedMessagesSnapshot == null ? null : cachedMessagesSnapshot.child(chatId);
             if (chatSnapshot != null && chatSnapshot.exists()) {
                 for (DataSnapshot messageSnapshot : chatSnapshot.getChildren()) {
                     String text = messageSnapshot.child("text").getValue(String.class);
@@ -184,7 +213,7 @@ public class UsersVIewModel extends ViewModel {
                     String receiverId = messageSnapshot.child("receiverId").getValue(String.class);
                     Boolean isRead = messageSnapshot.child("read").getValue(Boolean.class);
                     if (isRead == null) isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
-                    if (currentUserId.equals(receiverId) && Boolean.FALSE.equals(isRead)) {
+                    if (currentId.equals(receiverId) && Boolean.FALSE.equals(isRead)) {
                         unread++;
                     }
                 }
@@ -234,7 +263,7 @@ public class UsersVIewModel extends ViewModel {
 
     public String getCurrentUserId() {
         FirebaseUser firebaseUser = auth.getCurrentUser();
-        return firebaseUser != null ? firebaseUser.getUid() : null;
+        return firebaseUser != null ? firebaseUser.getUid() : activeUserId;
     }
 
     public void logout() {
@@ -246,14 +275,10 @@ public class UsersVIewModel extends ViewModel {
         FirebaseUser firebaseUser = auth.getCurrentUser();
         if (firebaseUser == null) return;
 
-        usersReference.child(firebaseUser.getUid())
-                .child("online")
-                .setValue(isOnline);
+        usersReference.child(firebaseUser.getUid()).child("online").setValue(isOnline);
 
         if (!isOnline) {
-            usersReference.child(firebaseUser.getUid())
-                    .child("lastSeen")
-                    .setValue(System.currentTimeMillis());
+            usersReference.child(firebaseUser.getUid()).child("lastSeen").setValue(System.currentTimeMillis());
         }
     }
 }
