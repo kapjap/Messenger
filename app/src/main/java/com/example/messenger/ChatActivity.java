@@ -255,7 +255,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onPause();
         if (viewModel != null) {
             viewModel.setTyping(false);
-            viewModel.setUserOnline(false);
         }
     }
 
