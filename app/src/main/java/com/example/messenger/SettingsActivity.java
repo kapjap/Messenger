@@ -8,6 +8,8 @@ import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
+import com.google.android.material.button.MaterialButton;
+
 public class SettingsActivity extends AppCompatActivity {
 
     @Override
@@ -17,6 +19,9 @@ public class SettingsActivity extends AppCompatActivity {
 
         ImageButton buttonBack = findViewById(R.id.buttonBack);
         buttonBack.setOnClickListener(v -> onBackPressed());
+
+        MaterialButton buttonAbout = findViewById(R.id.buttonAbout);
+        buttonAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
 
         SwitchCompat switchDarkTheme = findViewById(R.id.switchDarkTheme);
         switchDarkTheme.setChecked(ThemePreferences.isDarkThemeEnabled(this));
