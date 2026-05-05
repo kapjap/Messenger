@@ -4,6 +4,9 @@
         android:id="@+id/item_profile"
         android:title="Профиль" />
     <item
+        android:id="@+id/item_pinned_chats"
+        android:title="Закреплённые" />
+    <item
         android:id="@+id/item_logout"
         android:title="@string/logout" />
 </menu>
