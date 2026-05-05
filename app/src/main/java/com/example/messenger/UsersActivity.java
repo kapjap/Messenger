@@ -9,9 +9,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -38,7 +38,6 @@ public class UsersActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_users);
         initViews();
 
@@ -52,6 +51,8 @@ public class UsersActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        usersAdapter.setOnUserLongClickListener(this::showPinPopup);
+
         editTextSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) { applyFilter(s); }
@@ -63,6 +64,21 @@ public class UsersActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+    }
+
+    private void showPinPopup(UsersVIewModel.ChatPreview preview) {
+        PopupMenu popupMenu = new PopupMenu(this, recyclingView);
+        String title = preview.isPinned() ? "Открепить чат" : "Закрепить чат";
+        popupMenu.getMenu().add(0, 1, 0, title);
+        popupMenu.setOnMenuItemClickListener(item -> {
+            User user = preview.getUser();
+            if (item.getItemId() == 1 && user != null && user.getId() != null) {
+                vIewModel.togglePinned(user.getId());
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
     }
 
     private void initViews() {
@@ -126,6 +142,10 @@ public class UsersActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.item_profile) {
             startActivity(ProfileActivity.newIntent(this));
+            return true;
+        }
+        if (item.getItemId() == R.id.item_pinned_chats) {
+            startActivity(PinnedChatsActivity.newIntent(this));
             return true;
         }
         if (item.getItemId() == R.id.item_logout) {

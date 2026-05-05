@@ -47,6 +47,17 @@
                     android:textStyle="bold"
                     tools:text="Анна Смирнова" />
 
+                <ImageView
+                    android:id="@+id/imageViewPinned"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="Закреплённый чат"
+                    android:src="@android:drawable/btn_star_big_on"
+                    android:tint="@color/primary"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
                 <TextView
                     android:id="@+id/textViewLastMessageTime"
                     android:layout_width="wrap_content"

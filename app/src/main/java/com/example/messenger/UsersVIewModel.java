@@ -15,10 +15,11 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class UsersVIewModel extends ViewModel {
 
@@ -27,38 +28,73 @@ public class UsersVIewModel extends ViewModel {
         private final String lastMessage;
         private final long lastMessageTime;
         private final int unreadCount;
+        private final boolean pinned;
 
-        public ChatPreview(User user, String lastMessage, long lastMessageTime, int unreadCount) {
+        public ChatPreview(User user, String lastMessage, long lastMessageTime, int unreadCount, boolean pinned) {
             this.user = user;
             this.lastMessage = lastMessage;
             this.lastMessageTime = lastMessageTime;
             this.unreadCount = unreadCount;
+            this.pinned = pinned;
         }
 
         public User getUser() { return user; }
         public String getLastMessage() { return lastMessage; }
         public long getLastMessageTime() { return lastMessageTime; }
         public int getUnreadCount() { return unreadCount; }
+        public boolean isPinned() { return pinned; }
     }
 
     private final FirebaseAuth auth;
     private final DatabaseReference usersReference;
     private final DatabaseReference messagesReference;
+    private final DatabaseReference pinnedChatsReference;
 
     private final MutableLiveData<FirebaseUser> user = new MutableLiveData<>();
     private final MutableLiveData<List<ChatPreview>> chatPreviews = new MutableLiveData<>(new ArrayList<>());
+
+    private final Set<String> pinnedChatIds = new HashSet<>();
 
     public UsersVIewModel() {
         auth = FirebaseAuth.getInstance();
         usersReference = FirebaseDatabase.getInstance().getReference("Users");
         messagesReference = FirebaseDatabase.getInstance().getReference("Messages");
+        pinnedChatsReference = FirebaseDatabase.getInstance().getReference("PinnedChats");
 
         auth.addAuthStateListener(firebaseAuth -> {
-            user.setValue(firebaseAuth.getCurrentUser());
-            loadChats();
+            FirebaseUser current = firebaseAuth.getCurrentUser();
+            user.setValue(current);
+            if (current == null) {
+                chatPreviews.setValue(new ArrayList<>());
+                pinnedChatIds.clear();
+                return;
+            }
+            observePinnedChats(current.getUid());
         });
 
-        loadChats();
+        FirebaseUser current = auth.getCurrentUser();
+        if (current != null) {
+            observePinnedChats(current.getUid());
+        }
+    }
+
+    private void observePinnedChats(String uid) {
+        pinnedChatsReference.child(uid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                pinnedChatIds.clear();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    Boolean isPinned = child.getValue(Boolean.class);
+                    if (Boolean.TRUE.equals(isPinned) && child.getKey() != null) {
+                        pinnedChatIds.add(child.getKey());
+                    }
+                }
+                loadChats();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) { }
+        });
     }
 
     private void loadChats() {
@@ -68,7 +104,7 @@ public class UsersVIewModel extends ViewModel {
             return;
         }
 
-        usersReference.addValueEventListener(new ValueEventListener() {
+        usersReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot usersSnapshot) {
                 Map<String, User> usersMap = new HashMap<>();
@@ -122,10 +158,15 @@ public class UsersVIewModel extends ViewModel {
                                 }
                             }
 
-                            previews.add(new ChatPreview(otherUser, lastMessageText, lastMessageTime, unread));
+                            previews.add(new ChatPreview(otherUser, lastMessageText, lastMessageTime, unread, pinnedChatIds.contains(chatId)));
                         }
 
-                        Collections.sort(previews, (a, b) -> Long.compare(b.getLastMessageTime(), a.getLastMessageTime()));
+                        Collections.sort(previews, (a, b) -> {
+                            if (a.isPinned() != b.isPinned()) {
+                                return a.isPinned() ? -1 : 1;
+                            }
+                            return Long.compare(b.getLastMessageTime(), a.getLastMessageTime());
+                        });
                         chatPreviews.setValue(previews);
                     }
 
@@ -137,6 +178,20 @@ public class UsersVIewModel extends ViewModel {
             @Override
             public void onCancelled(@NonNull DatabaseError error) { }
         });
+    }
+
+    public void togglePinned(String otherUserId) {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null || otherUserId == null) return;
+
+        String chatId = createChatId(currentUser.getUid(), otherUserId);
+        DatabaseReference ref = pinnedChatsReference.child(currentUser.getUid()).child(chatId);
+
+        if (pinnedChatIds.contains(chatId)) {
+            ref.removeValue();
+        } else {
+            ref.setValue(true);
+        }
     }
 
     private String createChatId(String uid1, String uid2) {

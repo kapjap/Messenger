@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,6 +24,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
     private List<UsersVIewModel.ChatPreview> chats = new ArrayList<>();
     private OnUserClickListener onUserClickListener;
+    private OnUserLongClickListener onUserLongClickListener;
 
     public void setChats(List<UsersVIewModel.ChatPreview> chats) {
         this.chats = chats;
@@ -31,6 +33,10 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
 
     public void setOnUserClickListener(OnUserClickListener listener) {
         this.onUserClickListener = listener;
+    }
+
+    public void setOnUserLongClickListener(OnUserLongClickListener listener) {
+        this.onUserLongClickListener = listener;
     }
 
     @Override
@@ -57,6 +63,8 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         holder.onlineStatus.setBackground(background);
         holder.textViewStatus.setText(isOnline ? "Online" : "Offline");
 
+        holder.imageViewPinned.setVisibility(preview.isPinned() ? View.VISIBLE : View.GONE);
+
         int unreadCount = preview.getUnreadCount();
         if (unreadCount > 0) {
             holder.textViewUnreadCount.setVisibility(View.VISIBLE);
@@ -69,6 +77,14 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
             if (onUserClickListener != null) {
                 onUserClickListener.onUserClick(user);
             }
+        });
+
+        holder.itemView.setOnLongClickListener(v -> {
+            if (onUserLongClickListener != null) {
+                onUserLongClickListener.onUserLongClick(preview);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -91,6 +107,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         TextView textViewLastMessage;
         TextView textViewLastMessageTime;
         TextView textViewUnreadCount;
+        ImageView imageViewPinned;
         View onlineStatus;
 
         public UserViewHolder(@NonNull View itemView) {
@@ -100,11 +117,16 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
             textViewLastMessage = itemView.findViewById(R.id.textViewLastMessage);
             textViewLastMessageTime = itemView.findViewById(R.id.textViewLastMessageTime);
             textViewUnreadCount = itemView.findViewById(R.id.textViewUnreadCount);
+            imageViewPinned = itemView.findViewById(R.id.imageViewPinned);
             onlineStatus = itemView.findViewById(R.id.onlineStatus);
         }
     }
 
     interface OnUserClickListener {
         void onUserClick(User user);
+    }
+
+    interface OnUserLongClickListener {
+        void onUserLongClick(UsersVIewModel.ChatPreview chatPreview);
     }
 }
