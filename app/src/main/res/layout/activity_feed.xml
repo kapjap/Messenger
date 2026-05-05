@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp">
+
+            <ImageButton
+                android:id="@+id/buttonBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@android:color/transparent"
+                android:contentDescription="Назад"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_media_previous"
+                android:tint="@color/primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Лента активности"
+                android:textColor="@color/primary"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="@color/card_bg"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Основные показатели"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Сообщений отправлено"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/valueTotalSent"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="0"
+                        android:textColor="@color/primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Активных чатов" android:textColor="@color/text_secondary" android:textSize="14sp" />
+                    <TextView android:id="@+id/valueActiveChats" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:text="0" android:textColor="@color/primary" android:textSize="18sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Непрочитанных" android:textColor="@color/text_secondary" android:textSize="14sp" />
+                    <TextView android:id="@+id/valueUnread" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:text="0" android:textColor="@color/primary" android:textSize="18sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Групповых чатов" android:textColor="@color/text_secondary" android:textSize="14sp" />
+                    <TextView android:id="@+id/valueGroupChats" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="end" android:text="0" android:textColor="@color/primary" android:textSize="18sp" android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Последнее действие"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:id="@+id/valueLastAction"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Активность пока отсутствует"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/card_bg"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Статистика за неделю"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_marginTop="14dp"
+                    android:baselineAligned="false"
+                    android:gravity="bottom"
+                    android:orientation="horizontal"
+                    android:weightSum="7">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar1" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Пн" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar2" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Вт" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar3" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Ср" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar4" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Чт" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar5" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Пт" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar6" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Сб" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_horizontal|bottom" android:orientation="vertical"><TextView android:id="@+id/dayCount7" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/text_secondary" android:textSize="12sp" /><LinearLayout android:id="@+id/dayBar7" android:layout_width="14dp" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:background="@color/primary_light" /><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Вс" android:textColor="@color/text_secondary" android:textSize="12sp" /></LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/card_bg"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Самый активный контакт"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/valueTopContact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Активность пока отсутствует"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</ScrollView>
