@@ -27,17 +27,23 @@ public class GroupChatViewModel extends ViewModel {
     private final DatabaseReference groupMessagesRef = FirebaseDatabase.getInstance().getReference("GroupMessages");
 
     private String groupId;
+    private String currentUserId;
 
-    public void init(String groupId) {
+    public void init(String groupId, String currentUserId) {
         if (groupId == null || groupId.trim().isEmpty()) {
             error.setValue("Ошибка: groupId пустой");
             return;
         }
-        if (groupId.equals(this.groupId)) {
+        if (currentUserId == null || currentUserId.trim().isEmpty()) {
+            error.setValue("Ошибка: пользователь не найден");
+            return;
+        }
+        if (groupId.equals(this.groupId) && currentUserId.equals(this.currentUserId)) {
             return;
         }
 
         this.groupId = groupId;
+        this.currentUserId = currentUserId;
         observeGroup();
         observeMessages();
     }
@@ -75,6 +81,7 @@ public class GroupChatViewModel extends ViewModel {
                         if (message.getId() == null || message.getId().trim().isEmpty()) {
                             message.setId(child.getKey());
                         }
+                        markIncomingMessageAsRead(message);
                         newMessages.add(message);
                     }
                 }
@@ -86,6 +93,19 @@ public class GroupChatViewModel extends ViewModel {
                 error.setValue(databaseError.getMessage());
             }
         });
+    }
+
+    private void markIncomingMessageAsRead(GroupMessage message) {
+        if (message == null || currentUserId == null || message.getId() == null) return;
+        if (currentUserId.equals(message.getSenderId())) return;
+        if (message.isReadBy(currentUserId)) return;
+
+        groupMessagesRef
+                .child(groupId)
+                .child(message.getId())
+                .child("readBy")
+                .child(currentUserId)
+                .setValue(true);
     }
 
     public void sendMessage(String senderId, String senderName, String text) {
