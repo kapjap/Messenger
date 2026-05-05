@@ -151,7 +151,10 @@ public class UsersVIewModel extends ViewModel {
                                     }
 
                                     String receiverId = messageSnapshot.child("receiverId").getValue(String.class);
-                                    Boolean isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
+                                    Boolean isRead = messageSnapshot.child("read").getValue(Boolean.class);
+                                    if (isRead == null) {
+                                        isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
+                                    }
                                     if (currentUser.getUid().equals(receiverId) && Boolean.FALSE.equals(isRead)) {
                                         unread++;
                                     }

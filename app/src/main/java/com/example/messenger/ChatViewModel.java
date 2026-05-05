@@ -80,6 +80,7 @@ public class ChatViewModel extends ViewModel {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Message> messageList = new ArrayList<>();
+                List<String> unreadIncomingIds = new ArrayList<>();
 
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Message message = dataSnapshot.getValue(Message.class);
@@ -88,10 +89,15 @@ public class ChatViewModel extends ViewModel {
                             message.setId(dataSnapshot.getKey());
                         }
                         messageList.add(message);
+
+                        if (currentUserId.equals(message.getReceiverId()) && !message.isRead() && dataSnapshot.getKey() != null) {
+                            unreadIncomingIds.add(dataSnapshot.getKey());
+                        }
                     }
                 }
 
                 messages.setValue(messageList);
+                markIncomingAsRead(unreadIncomingIds);
             }
 
             @Override
@@ -99,6 +105,15 @@ public class ChatViewModel extends ViewModel {
                 error.setValue(databaseError.getMessage());
             }
         });
+    }
+
+    private void markIncomingAsRead(List<String> unreadIncomingIds) {
+        if (unreadIncomingIds == null || unreadIncomingIds.isEmpty()) {
+            return;
+        }
+        for (String messageId : unreadIncomingIds) {
+            referenceMessages.child(chatId).child(messageId).child("read").setValue(true);
+        }
     }
 
     private void observeOtherUserTyping() {
@@ -151,6 +166,7 @@ public class ChatViewModel extends ViewModel {
         if (message.getTimestamp() <= 0) {
             message.setTimestamp(System.currentTimeMillis());
         }
+        message.setRead(false);
 
         newMessageRef
                 .setValue(message)
