@@ -12,9 +12,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
+
+    private static final long ONLINE_TIMEOUT_MS = 2 * 60 * 1000;
 
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>();
     private final MutableLiveData<User> otherUser = new MutableLiveData<>();
@@ -46,6 +50,7 @@ public class ChatViewModel extends ViewModel {
 
         chatId = createChatId(currentUserId, otherUserId);
 
+        setupPresence();
         loadOtherUser();
         loadMessages();
         observeOtherUserTyping();
@@ -62,6 +67,8 @@ public class ChatViewModel extends ViewModel {
                 User user = snapshot.getValue(User.class);
 
                 if (user != null) {
+                    user.setId(snapshot.getKey());
+                    user.setOnline(isUserReallyOnline(user));
                     otherUser.setValue(user);
                 } else {
                     error.setValue("Пользователь не найден");
@@ -73,6 +80,13 @@ public class ChatViewModel extends ViewModel {
                 error.setValue(databaseError.getMessage());
             }
         });
+    }
+
+    private boolean isUserReallyOnline(User user) {
+        if (user == null || !user.isOnline()) return false;
+        long lastSeen = user.getLastSeen();
+        if (lastSeen <= 0) return true;
+        return System.currentTimeMillis() - lastSeen < ONLINE_TIMEOUT_MS;
     }
 
     private void loadMessages() {
@@ -179,16 +193,23 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        referenceTyping
-                .child(chatId)
-                .child(currentUserId)
-                .setValue(isTyping);
+        DatabaseReference typingRef = referenceTyping.child(chatId).child(currentUserId);
+        typingRef.onDisconnect().setValue(false);
+        typingRef.setValue(isTyping);
     }
 
     private boolean canUseTypingNode() {
         return chatId != null && !chatId.trim().isEmpty()
                 && currentUserId != null && !currentUserId.trim().isEmpty()
                 && otherUserId != null && !otherUserId.trim().isEmpty();
+    }
+
+    private void setupPresence() {
+        if (currentUserId == null || currentUserId.trim().isEmpty()) return;
+        DatabaseReference userRef = referenceUsers.child(currentUserId);
+        userRef.child("online").onDisconnect().setValue(false);
+        userRef.child("lastSeen").onDisconnect().setValue(System.currentTimeMillis());
+        setUserOnline(true);
     }
 
     public LiveData<List<Message>> getMessages() {
@@ -216,6 +237,9 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        referenceUsers.child(currentUserId).child("online").setValue(isOnline);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("online", isOnline);
+        updates.put("lastSeen", System.currentTimeMillis());
+        referenceUsers.child(currentUserId).updateChildren(updates);
     }
 }
