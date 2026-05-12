@@ -9,6 +9,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.Map;
 
 public class ChatViewModel extends ViewModel {
 
-    private static final long ONLINE_TIMEOUT_MS = 2 * 60 * 1000;
+    private static final long ONLINE_TIMEOUT_MS = 90_000L;
 
     private final MutableLiveData<List<Message>> messages = new MutableLiveData<>();
     private final MutableLiveData<User> otherUser = new MutableLiveData<>();
@@ -50,7 +51,6 @@ public class ChatViewModel extends ViewModel {
 
         chatId = createChatId(currentUserId, otherUserId);
 
-        setupPresence();
         loadOtherUser();
         loadMessages();
         observeOtherUserTyping();
@@ -85,7 +85,7 @@ public class ChatViewModel extends ViewModel {
     private boolean isUserReallyOnline(User user) {
         if (user == null || !user.isOnline()) return false;
         long lastSeen = user.getLastSeen();
-        if (lastSeen <= 0) return true;
+        if (lastSeen <= 0) return false;
         return System.currentTimeMillis() - lastSeen < ONLINE_TIMEOUT_MS;
     }
 
@@ -204,14 +204,6 @@ public class ChatViewModel extends ViewModel {
                 && otherUserId != null && !otherUserId.trim().isEmpty();
     }
 
-    private void setupPresence() {
-        if (currentUserId == null || currentUserId.trim().isEmpty()) return;
-        DatabaseReference userRef = referenceUsers.child(currentUserId);
-        userRef.child("online").onDisconnect().setValue(false);
-        userRef.child("lastSeen").onDisconnect().setValue(System.currentTimeMillis());
-        setUserOnline(true);
-    }
-
     public LiveData<List<Message>> getMessages() {
         return messages;
     }
@@ -239,7 +231,7 @@ public class ChatViewModel extends ViewModel {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("online", isOnline);
-        updates.put("lastSeen", System.currentTimeMillis());
+        updates.put("lastSeen", ServerValue.TIMESTAMP);
         referenceUsers.child(currentUserId).updateChildren(updates);
     }
 }
