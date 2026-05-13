@@ -23,6 +23,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +86,7 @@ public class UsersActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        usersAdapter.setOnUserLongClickListener(this::showPinPopup);
+        usersAdapter.setOnUserLongClickListener(preview -> Toast.makeText(this, "Закрепление можно включить позже", Toast.LENGTH_SHORT).show());
 
         editTextSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
@@ -160,23 +162,11 @@ public class UsersActivity extends AppCompatActivity {
         return false;
     }
 
-    private void showPinPopup(UsersVIewModel.ChatPreview preview) {
-        PopupMenu popupMenu = new PopupMenu(this, recyclerViewUsers);
-        String title = preview.isPinned() ? "Открепить чат" : "Закрепить чат";
-        popupMenu.getMenu().add(0, 1, 0, title);
-        popupMenu.setOnMenuItemClickListener(item -> {
-            User user = preview.getUser();
-            if (item.getItemId() == 1 && user != null && user.getId() != null) {
-                viewModel.togglePinned(user.getId());
-                return true;
-            }
-            return false;
-        });
-        popupMenu.show();
-    }
-
     private void applyFilter(CharSequence query) {
         String q = query == null ? "" : query.toString().toLowerCase(Locale.getDefault()).trim();
+        FirebaseUser current = FirebaseAuth.getInstance().getCurrentUser();
+        String currentId = current != null ? current.getUid() : viewModel.getCurrentUserId();
+        String currentEmail = current != null && current.getEmail() != null ? current.getEmail().trim().toLowerCase(Locale.getDefault()) : "";
 
         List<UsersVIewModel.ChatPreview> filtered = new ArrayList<>();
         for (UsersVIewModel.ChatPreview chat : allChats) {
@@ -186,12 +176,16 @@ public class UsersActivity extends AppCompatActivity {
             User user = chat.getUser();
             if (user == null) continue;
 
+            if (currentId != null && currentId.equals(user.getId())) continue;
+            String userEmail = user.getEmail() == null ? "" : user.getEmail().trim().toLowerCase(Locale.getDefault());
+            if (!currentEmail.isEmpty() && currentEmail.equals(userEmail)) continue;
+
             String firstName = user.getName() == null ? "" : user.getName();
             String lastName = user.getLastName() == null ? "" : user.getLastName();
             String fullName = (firstName + " " + lastName).toLowerCase(Locale.getDefault()).trim();
             String lastMessage = chat.getLastMessage() == null ? "" : chat.getLastMessage().toLowerCase(Locale.getDefault());
 
-            if (q.isEmpty() || fullName.contains(q) || lastMessage.contains(q)) {
+            if (q.isEmpty() || fullName.contains(q) || userEmail.contains(q) || lastMessage.contains(q)) {
                 filtered.add(chat);
             }
         }
