@@ -27,7 +27,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     private OnUserLongClickListener onUserLongClickListener;
 
     public void setChats(List<UsersVIewModel.ChatPreview> chats) {
-        this.chats = chats;
+        this.chats = chats == null ? new ArrayList<>() : chats;
         notifyDataSetChanged();
     }
 
@@ -48,13 +48,14 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     public void onBindViewHolder(@NonNull UserViewHolder holder, int position) {
         UsersVIewModel.ChatPreview preview = chats.get(position);
         User user = preview.getUser();
+        if (user == null) return;
 
-        String fullName = (user.getName() + " " + user.getLastName()).trim();
+        String fullName = (safe(user.getName()) + " " + safe(user.getLastName())).trim();
+        if (fullName.isEmpty()) fullName = safe(user.getEmail());
         holder.textViewUserName.setText(fullName.isEmpty() ? "Пользователь" : fullName);
 
         String message = preview.getLastMessage();
         holder.textViewLastMessage.setText(TextUtils.isEmpty(message) ? EMPTY_MESSAGE_HINT : message);
-
         holder.textViewLastMessageTime.setText(formatTime(preview.getLastMessageTime()));
 
         boolean isOnline = user.isOnline();
@@ -74,9 +75,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
         }
 
         holder.itemView.setOnClickListener(v -> {
-            if (onUserClickListener != null) {
-                onUserClickListener.onUserClick(user);
-            }
+            if (onUserClickListener != null) onUserClickListener.onUserClick(user);
         });
 
         holder.itemView.setOnLongClickListener(v -> {
@@ -84,8 +83,12 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
                 onUserLongClickListener.onUserLongClick(preview);
                 return true;
             }
-            return false;
+            return true;
         });
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value;
     }
 
     private String formatTime(long timestamp) {
@@ -96,8 +99,7 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.UserViewHold
     @NonNull
     @Override
     public UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.user_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.user_item, parent, false);
         return new UserViewHolder(view);
     }
 
