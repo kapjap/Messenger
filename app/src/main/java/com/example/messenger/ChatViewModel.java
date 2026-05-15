@@ -31,6 +31,13 @@ public class ChatViewModel extends ViewModel {
     private final DatabaseReference referenceMessages;
     private final DatabaseReference referenceTyping;
 
+    private DatabaseReference otherUserRef;
+    private DatabaseReference currentChatMessagesRef;
+    private DatabaseReference otherUserTypingRef;
+    private ValueEventListener otherUserListener;
+    private ValueEventListener messagesListener;
+    private ValueEventListener typingListener;
+
     private final String currentUserId;
     private final String otherUserId;
     private String chatId;
@@ -61,7 +68,8 @@ public class ChatViewModel extends ViewModel {
     }
 
     private void loadOtherUser() {
-        referenceUsers.child(otherUserId).addValueEventListener(new ValueEventListener() {
+        otherUserRef = referenceUsers.child(otherUserId);
+        otherUserListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 User user = snapshot.getValue(User.class);
@@ -79,7 +87,8 @@ public class ChatViewModel extends ViewModel {
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 error.setValue(databaseError.getMessage());
             }
-        });
+        };
+        otherUserRef.addValueEventListener(otherUserListener);
     }
 
     private boolean isUserReallyOnline(User user) {
@@ -90,7 +99,8 @@ public class ChatViewModel extends ViewModel {
     }
 
     private void loadMessages() {
-        referenceMessages.child(chatId).addValueEventListener(new ValueEventListener() {
+        currentChatMessagesRef = referenceMessages.child(chatId);
+        messagesListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 List<Message> messageList = new ArrayList<>();
@@ -104,7 +114,9 @@ public class ChatViewModel extends ViewModel {
                         }
                         messageList.add(message);
 
-                        if (currentUserId.equals(message.getReceiverId()) && !message.isRead() && dataSnapshot.getKey() != null) {
+                        boolean incoming = currentUserId.equals(message.getReceiverId())
+                                && !currentUserId.equals(message.getSenderId());
+                        if (incoming && !message.isRead() && dataSnapshot.getKey() != null) {
                             unreadIncomingIds.add(dataSnapshot.getKey());
                         }
                     }
@@ -118,7 +130,8 @@ public class ChatViewModel extends ViewModel {
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 error.setValue(databaseError.getMessage());
             }
-        });
+        };
+        currentChatMessagesRef.addValueEventListener(messagesListener);
     }
 
     private void markIncomingAsRead(List<String> unreadIncomingIds) {
@@ -136,21 +149,20 @@ public class ChatViewModel extends ViewModel {
             return;
         }
 
-        referenceTyping
-                .child(chatId)
-                .child(otherUserId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Boolean isTyping = snapshot.getValue(Boolean.class);
-                        otherUserTyping.setValue(Boolean.TRUE.equals(isTyping));
-                    }
+        otherUserTypingRef = referenceTyping.child(chatId).child(otherUserId);
+        typingListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                Boolean isTyping = snapshot.getValue(Boolean.class);
+                otherUserTyping.setValue(Boolean.TRUE.equals(isTyping));
+            }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        error.setValue(databaseError.getMessage());
-                    }
-                });
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+            }
+        };
+        otherUserTypingRef.addValueEventListener(typingListener);
     }
 
     public void sendMessage(Message message) {
@@ -233,5 +245,22 @@ public class ChatViewModel extends ViewModel {
         updates.put("online", isOnline);
         updates.put("lastSeen", ServerValue.TIMESTAMP);
         referenceUsers.child(currentUserId).updateChildren(updates);
+    }
+
+    @Override
+    protected void onCleared() {
+        if (otherUserRef != null && otherUserListener != null) {
+            otherUserRef.removeEventListener(otherUserListener);
+        }
+        if (currentChatMessagesRef != null && messagesListener != null) {
+            currentChatMessagesRef.removeEventListener(messagesListener);
+        }
+        if (otherUserTypingRef != null && typingListener != null) {
+            otherUserTypingRef.removeEventListener(typingListener);
+        }
+        if (canUseTypingNode()) {
+            referenceTyping.child(chatId).child(currentUserId).setValue(false);
+        }
+        super.onCleared();
     }
 }
