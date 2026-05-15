@@ -11,6 +11,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class UsersVIewModel extends ViewModel {
+
+    private static final long ONLINE_TIMEOUT_MS = 90_000L;
 
     public static class ChatPreview {
         private final User user;
@@ -175,8 +178,16 @@ public class UsersVIewModel extends ViewModel {
             if (uid == null || uid.equals(currentId)) continue;
 
             u.setId(uid);
+            u.setOnline(isUserReallyOnline(u));
             cachedUsers.put(uid, u);
         }
+    }
+
+    private boolean isUserReallyOnline(User u) {
+        if (u == null || !u.isOnline()) return false;
+        long lastSeen = u.getLastSeen();
+        if (lastSeen <= 0) return false;
+        return System.currentTimeMillis() - lastSeen < ONLINE_TIMEOUT_MS;
     }
 
     private void publishChatPreviews() {
@@ -210,10 +221,14 @@ public class UsersVIewModel extends ViewModel {
                         lastMessageText = text == null ? "" : text;
                     }
 
+                    String senderId = messageSnapshot.child("senderId").getValue(String.class);
                     String receiverId = messageSnapshot.child("receiverId").getValue(String.class);
                     Boolean isRead = messageSnapshot.child("read").getValue(Boolean.class);
                     if (isRead == null) isRead = messageSnapshot.child("isRead").getValue(Boolean.class);
-                    if (currentId.equals(receiverId) && Boolean.FALSE.equals(isRead)) {
+                    if (isRead == null) isRead = false;
+
+                    boolean incoming = !currentId.equals(senderId) && currentId.equals(receiverId);
+                    if (incoming && !isRead) {
                         unread++;
                     }
                 }
@@ -275,10 +290,9 @@ public class UsersVIewModel extends ViewModel {
         FirebaseUser firebaseUser = auth.getCurrentUser();
         if (firebaseUser == null) return;
 
-        usersReference.child(firebaseUser.getUid()).child("online").setValue(isOnline);
-
-        if (!isOnline) {
-            usersReference.child(firebaseUser.getUid()).child("lastSeen").setValue(System.currentTimeMillis());
-        }
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("online", isOnline);
+        updates.put("lastSeen", ServerValue.TIMESTAMP);
+        usersReference.child(firebaseUser.getUid()).updateChildren(updates);
     }
 }
