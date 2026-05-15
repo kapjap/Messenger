@@ -23,11 +23,16 @@ public class GroupChatViewModel extends ViewModel {
     private final MutableLiveData<Boolean> messageSent = new MutableLiveData<>();
     private final MutableLiveData<String> error = new MutableLiveData<>();
 
+    private final DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference("Users");
     private final DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference("Groups");
     private final DatabaseReference groupMessagesRef = FirebaseDatabase.getInstance().getReference("GroupMessages");
 
+    private final Map<String, String> senderNames = new HashMap<>();
+    private List<GroupMessage> cachedMessages = new ArrayList<>();
+
     private String groupId;
     private String currentUserId;
+    private String currentUserName = "";
 
     public void init(String groupId, String currentUserId) {
         if (groupId == null || groupId.trim().isEmpty()) {
@@ -44,8 +49,57 @@ public class GroupChatViewModel extends ViewModel {
 
         this.groupId = groupId;
         this.currentUserId = currentUserId;
+        observeCurrentUserName();
+        observeUsers();
         observeGroup();
         observeMessages();
+    }
+
+    private void observeCurrentUserName() {
+        usersRef.child(currentUserId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                currentUserName = buildUserDisplayName(snapshot, currentUserId);
+                senderNames.put(currentUserId, currentUserName);
+                publishMessages();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+            }
+        });
+    }
+
+    private void observeUsers() {
+        usersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                senderNames.clear();
+                for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                    String uid = userSnapshot.getKey();
+                    if (uid == null || uid.trim().isEmpty()) continue;
+                    senderNames.put(uid, buildUserDisplayName(userSnapshot, uid));
+                }
+                publishMessages();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                error.setValue(databaseError.getMessage());
+            }
+        });
+    }
+
+    private String buildUserDisplayName(DataSnapshot snapshot, String fallbackUid) {
+        String name = snapshot.child("name").getValue(String.class);
+        String lastName = snapshot.child("lastName").getValue(String.class);
+        String email = snapshot.child("email").getValue(String.class);
+
+        String fullName = ((name == null ? "" : name) + " " + (lastName == null ? "" : lastName)).trim();
+        if (!fullName.isEmpty()) return fullName;
+        if (email != null && !email.trim().isEmpty()) return email.trim();
+        return fallbackUid == null ? "Пользователь" : fallbackUid;
     }
 
     private void observeGroup() {
@@ -85,7 +139,8 @@ public class GroupChatViewModel extends ViewModel {
                         newMessages.add(message);
                     }
                 }
-                messages.setValue(newMessages);
+                cachedMessages = newMessages;
+                publishMessages();
             }
 
             @Override
@@ -93,6 +148,20 @@ public class GroupChatViewModel extends ViewModel {
                 error.setValue(databaseError.getMessage());
             }
         });
+    }
+
+    private void publishMessages() {
+        List<GroupMessage> prepared = new ArrayList<>();
+        for (GroupMessage message : cachedMessages) {
+            String senderId = message.getSenderId();
+            if (senderId != null && senderNames.containsKey(senderId)) {
+                message.setSenderName(senderNames.get(senderId));
+            } else if (message.getSenderName() == null || message.getSenderName().trim().isEmpty()) {
+                message.setSenderName("Пользователь");
+            }
+            prepared.add(message);
+        }
+        messages.setValue(prepared);
     }
 
     private void markIncomingMessageAsRead(GroupMessage message) {
@@ -128,11 +197,18 @@ public class GroupChatViewModel extends ViewModel {
         Map<String, Boolean> readBy = new HashMap<>();
         readBy.put(senderId, true);
 
+        String resolvedSenderName = senderNames.containsKey(senderId)
+                ? senderNames.get(senderId)
+                : currentUserName;
+        if (resolvedSenderName == null || resolvedSenderName.trim().isEmpty()) {
+            resolvedSenderName = senderName != null ? senderName : "";
+        }
+
         GroupMessage message = new GroupMessage(
                 messageId,
                 text.trim(),
                 senderId,
-                senderName != null ? senderName : "",
+                resolvedSenderName,
                 System.currentTimeMillis(),
                 readBy
         );
