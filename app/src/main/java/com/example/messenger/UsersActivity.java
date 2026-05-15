@@ -86,7 +86,19 @@ public class UsersActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        usersAdapter.setOnUserLongClickListener(preview -> Toast.makeText(this, "Закрепление можно включить позже", Toast.LENGTH_SHORT).show());
+        usersAdapter.setOnUserLongClickListener(preview -> {
+            if (preview == null || preview.getUser() == null || preview.getUser().getId() == null) {
+                Toast.makeText(this, "Не удалось закрепить чат", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            viewModel.togglePinned(preview.getUser().getId());
+            Toast.makeText(
+                    this,
+                    preview.isPinned() ? "Чат откреплён" : "Чат закреплён",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
 
         editTextSearch.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
